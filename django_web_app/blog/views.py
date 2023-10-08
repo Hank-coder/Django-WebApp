@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
+import os
+from django.conf import settings
 from django.views.generic import (
     ListView,
     DetailView,
@@ -9,12 +11,17 @@ from django.views.generic import (
     UpdateView,
     DeleteView
 )
-from .models import Post
+
+from .detectImage.generate_text import generate_text
+from .models import Post, Category
 import operator
 from django.urls import reverse_lazy
 from django.contrib.staticfiles.views import serve
 
 from django.db.models import Q
+from django.contrib import messages
+from django import forms
+from .models import Post
 
 
 def home(request):
@@ -23,20 +30,21 @@ def home(request):
     }
     return render(request, 'blog/home.html', context)
 
+
 def search(request):
-    template='blog/home.html'
+    template = 'blog/home.html'
 
-    query=request.GET.get('q')
+    query = request.GET.get('q')
 
-    result=Post.objects.filter(Q(title__icontains=query) | Q(author__username__icontains=query) | Q(content__icontains=query))
-    paginate_by=2
-    context={ 'posts':result }
-    return render(request,template,context)
-   
+    result = Post.objects.filter(
+        Q(title__icontains=query) | Q(author__username__icontains=query) | Q(content__icontains=query))
+    paginate_by = 2
+    context = {'posts': result}
+    return render(request, template, context)
 
 
 def getfile(request):
-   return serve(request, 'File')
+    return serve(request, 'File')
 
 
 class PostListView(ListView):
@@ -63,20 +71,59 @@ class PostDetailView(DetailView):
     template_name = 'blog/post_detail.html'
 
 
-class PostCreateView(LoginRequiredMixin, CreateView):
-    model = Post
-    template_name = 'blog/post_form.html'
-    fields = ['title', 'content', 'file']
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ['file', 'language', 'platform', 'photo_category', 'special_request']
 
-    def form_valid(self, form):
+    photo_category = forms.ModelMultipleChoiceField(
+        queryset=Category.objects.all(),
+        widget=forms.SelectMultiple(attrs={'size': '10'}))
+
+
+class PostCreateView(LoginRequiredMixin, CreateView):
+    template_name = 'blog/post_form.html'
+    # fields = ['file', 'language', 'platform', 'photo_category', 'special_request']
+    form_class = PostForm  # 使用我们定义的表单
+
+    def form_valid(self, form): # 后端处理
         form.instance.author = self.request.user
-        return super().form_valid(form)
+
+        # First save the form to ensure that the file is saved
+        response = super().form_valid(form)
+
+        # # Notify user that the processing is starting
+        # messages.info(self.request, "Processing started. Please wait...  文本生成中")
+
+        # Now, the file should be saved and we can get its path
+        relative_path = self.object.file.name
+        full_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+
+        other_data = {
+            'language': form.cleaned_data['language'],
+            'platform': form.cleaned_data['platform'],
+            'photo_category': form.cleaned_data['photo_category'],
+            'special_request': form.cleaned_data['special_request'],
+        }
+        # Check for empty values
+        if not full_path or not other_data:
+            messages.error(self.request, "The file path or other data is missing. Please try again.")
+            return response
+
+        generated_text = generate_text(full_path, other_data)
+        self.object.generate_text = generated_text
+        self.object.save()  # Save the updated data
+
+        # Notify user that the processing is done
+        messages.success(self.request, "Processing completed successfully! 生成成功！")
+
+        return response
 
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
     template_name = 'blog/post_form.html'
-    fields = ['title', 'content', 'file']
+    fields = ['file', 'language', 'platform', 'photo_category', 'special_request']
 
     def form_valid(self, form):
         form.instance.author = self.request.user

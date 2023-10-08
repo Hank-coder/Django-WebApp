@@ -1,20 +1,81 @@
 {% extends "blog/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
+
     <div class="content-section pt-2 mt-3 shadow-lg"  >
-          <form action="" method="POST" enctype="multipart/form-data">
+          <form action="" method="POST" enctype="multipart/form-data">  <!--enctype="multipart/form-data"，这是处理文件上传所必需的-->
               {% csrf_token %}
               <fieldset class="form-group">
                     <legend class="border-bottom mb-4">
                         Post
                     </legend>
-                    {{ form|crispy }}
+
+                  <!-- File Field with preview, USE JAVASCRIPT-->
+                <label for="fileInput">File:</label>
+                <input id="fileInput" type="file" name="file" onchange="previewFile()" />
+                <img id="filePreview" src="#" alt="File preview" style="display: none; width: 100%;" />
+                <br><br>
+
+                <!-- Other fields rendered manually, REPLACE {{ form|crispy }}-->
+                {{ form.language|as_crispy_field }}
+                {{ form.platform|as_crispy_field }}
+                {{ form.photo_category|as_crispy_field }}
+                {{ form.special_request|as_crispy_field }}
               </fieldset>
-              <div class="form-group">
-                  
-                  <button class="btn btn-outline-primary" type="submit"><i class="fas fa-upload"></i> Upload</button>
-              </div>
+              <div class="form-group d-flex justify-content-start align-items-center">
+                <button class="btn btn-outline-primary" type="submit" onclick="validateForm() && showLoadingMessage()">
+                    <i class="fas fa-upload"></i> Upload 上传
+                </button>
+                <!-- 加载旋转器和提示消息 -->
+                <div id="loadingMessage" class="ml-3 d-none">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <span class="ml-2">正在生成...</span>
+                </div>
+            </div>
+
           </form>
          
       </div>
+
 {% endblock content %}
+
+{% block javascript %}
+<script>
+    function validateForm() {
+        const fileInput = document.getElementById('fileInput');
+        if (!fileInput.files.length) {
+            alert('Select at least one file! 请选择一个图片文件进行上传!');
+            return false;  // This will prevent form submission
+        }
+        return true;
+    }
+    function previewFile() {
+        const preview = document.getElementById('filePreview');
+        const file = document.getElementById('fileInput').files[0];
+        const reader = new FileReader();
+
+        reader.onloadend = function() {
+            preview.src = reader.result;
+            preview.style.display = "block";  // Show the preview
+        }
+
+        if (file) {
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = "";
+        }
+    }
+    // 动态处理效果
+     function showLoadingMessage() {
+        // Toggle the loading message visibility
+        const loadingMessage = document.getElementById('loadingMessage');
+        loadingMessage.classList.remove('d-none');
+    }
+</script>
+{% endblock %}
+
+
+
+

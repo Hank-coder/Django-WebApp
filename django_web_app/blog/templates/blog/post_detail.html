@@ -28,6 +28,8 @@
           {% if object.extension == '.jpg' or object.extension == 'jpeg' or object.extension == 'png' %}
             <a href="{{ object.file.url }}"  download ><img src="{{ object.file.url }}" alt="" class="img-fluid "></a>
             <a href="{{ object.file.url }}"  download class="text-dark"><h5>{{ object.file }}</h5></a>
+               <textarea class="form-control" style="width: 100%;" rows="4">{{ post.generate_text }}</textarea>
+
           {% elif object.extension == '.mp4' %}
             <div class="embed-responsive embed-responsive-16by9">
               <video id="video-1_html_api" class="vjs-tech" preload="auto" autoplay >

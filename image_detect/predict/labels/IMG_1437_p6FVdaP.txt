@@ -1,0 +1,5 @@
+0.04 cash_machine
+0.02 bearskin
+0.02 unicycle
+0.02 turnstile
+0.02 military_uniform
