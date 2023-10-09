@@ -81,13 +81,14 @@ WSGI_APPLICATION = 'django_web_app.wsgi.application'
 #     }
 # }
 
+# Mysql
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'your_db_name',
-        'USER': 'your_db_user',
-        'PASSWORD': 'your_db_password',
-        'HOST': 'your_server_ip_or_domain',   # Set to the address of your MySQL server
+        'NAME': 'webdata',
+        'USER': 'root',
+        'PASSWORD': '!@cyh1qw23er45T',
+        'HOST': '38.60.249.61',   # Set to the address of your MySQL server
         'PORT': '3306',                       # Default MySQL port
     }
 }
@@ -126,7 +127,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static'),
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'

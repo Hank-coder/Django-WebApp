@@ -6,8 +6,6 @@ import re
 import shutil
 
 import os
-import utils
-
 from .utils import extract_exif_info
 # Generate the message
 from .gpt_connect import generate_system_message

@@ -1,7 +1,7 @@
 import openai
 
 # Set the API base URL and key (ensure these values are stored securely)
-openai.api_key = "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"
+openai.api_key = ""
 
 
 def generate_system_message(user_inputs, results_dict_cls, exif_dict):
