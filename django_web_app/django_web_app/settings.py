@@ -24,7 +24,7 @@ SECRET_KEY = '@5&-q%^o=@mb@=@e%b9yz^b#l-2)w&_s0ick#=wy3kw36$z($g'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '28.60.249.61']
+ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.249.61']
 
 # Application definition
 
