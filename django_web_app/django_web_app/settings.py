@@ -24,7 +24,7 @@ SECRET_KEY = '@5&-q%^o=@mb@=@e%b9yz^b#l-2)w&_s0ick#=wy3kw36$z($g'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '28.60.249.61']
 
 # Application definition
 
@@ -88,8 +88,8 @@ DATABASES = {
         'NAME': 'webdata',
         'USER': 'root',
         'PASSWORD': '!@cyh1qw23er45T',
-        'HOST': '38.60.249.61',   # Set to the address of your MySQL server
-        'PORT': '3306',                       # Default MySQL port
+        'HOST': '38.60.249.61',  # Set to the address of your MySQL server
+        'PORT': '3306',  # Default MySQL port
     }
 }
 # Password validation
