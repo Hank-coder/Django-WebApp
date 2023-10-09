@@ -5,12 +5,12 @@ import sys
 
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
-
+    #
     # 如果只提供了脚本名称（例如，执行“python manage.py”而没有其他参数）
     # 则默认添加 'runserver' 作为参数
-    # if len(sys.argv) == 1:
-    #     sys.argv.append('runserver')
-    #     sys.argv.append('0.0.0.0:8000')
+    if len(sys.argv) == 1:
+        sys.argv.append('runserver')
+        sys.argv.append('0.0.0.0:8000')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
