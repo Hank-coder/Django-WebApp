@@ -24,7 +24,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.249.61']
+ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.249.61', '127.0.0.1']
 
 # Application definition
 
@@ -129,10 +129,10 @@ USE_TZ = True
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static"),]
 
 STATIC_URL = '/static/'
-#STATIC_ROOT = os.path.join(BASE_DIR, '/static')
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
-MEDIA_ROOT = os.path.join(BASE_DIR, '/media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
