@@ -1,3 +1,4 @@
 django_web_app/blog/detectImage/gpt_connect.py
 __pycache__/
 *.pyc
+django_web_app/media
