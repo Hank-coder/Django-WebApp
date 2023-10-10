@@ -1,2 +1,3 @@
-gpt_connect.py
-yolov8n-cls.pt
+django_web_app/blog/detectImage/gpt_connect.py
+__pycache__/
+*.pyc
