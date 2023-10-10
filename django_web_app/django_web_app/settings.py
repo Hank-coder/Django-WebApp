@@ -126,13 +126,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 # 如果您的静态文件不在app的默认static文件夹下，您需要设置 STATICFILES_DIRS 以指向它们
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "django_web_app/static"),]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static"),]
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+#STATIC_ROOT = os.path.join(BASE_DIR, '/static')
 
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, '/media')
 MEDIA_URL = '/media/'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
