@@ -4,8 +4,8 @@ import os
 import sys
 
 if __name__ == '__main__':
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
-    #
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_web_app.settings')
+
     # 如果只提供了脚本名称（例如，执行“python manage.py”而没有其他参数）
     # 则默认添加 'runserver' 作为参数
     if len(sys.argv) == 1:
