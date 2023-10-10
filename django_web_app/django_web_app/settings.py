@@ -90,6 +90,10 @@ DATABASES = {
         'PASSWORD': '!@cyh1qw23er45T',
         'HOST': '38.60.249.61',  # Set to the address of your MySQL server
         'PORT': '3306',  # Default MySQL port
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'collation': 'utf8mb4_unicode_ci',
+        },
     }
 }
 # Password validation
