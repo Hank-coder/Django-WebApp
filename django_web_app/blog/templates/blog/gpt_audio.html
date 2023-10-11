@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>录音功能</title>
+    <style>
+        /* 基础样式 */
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #2e2e2e; /* 深灰色背景 */
+            flex-direction: column-reverse;
+        }
+
+        .recording-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .record-button {
+            background-color: #ff5252;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .record-button:hover {
+            background-color: #ff6969;
+        }
+
+        .dialogue-container {
+            display: none; /* 刚开始隐藏对话框 */
+            margin-bottom: 20px;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            background: linear-gradient(to bottom right, #e5e5e5, #f4f4f4);
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .loading-circle {
+             display: none; /* 默认是隐藏的 */
+             border: 8px solid rgba(255, 255, 255, 0.3); /* 轻灰色 */
+             border-radius: 50%; /* 使其成为圆圈 */
+             border-top: 8px solid #ff5252; /* 红色 */
+             width: 50px;
+             height: 50px;
+             animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .user-message, .gpt-message {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .user-message {
+            background-color: #e3f2fd;
+            text-align: left;
+            color: blue;
+        }
+
+        .gpt-message {
+            background-color: #e8f5e9;
+            text-align: left;
+            color: green;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dialogue-container"></div>
+    <div class="recording-container">
+        <button class="record-button" onclick="startRecording()" >开始录音</button>
+        <button class="record-button" onclick="stopRecording()" style="display:none;">停止录音</button>
+        <div class="loading-circle"></div> <!-- 正在处理的小圆圈提示 -->
+    </div>
+
+
+
+    <script>
+        // 生成chat id
+        const chatId = generateChatId();
+
+        function generateChatId() {
+            const timestamp = new Date().getTime();
+            const randomNum = Math.floor(Math.random() * 10000);
+            return `${timestamp}-${randomNum}`;
+        }
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordingTimeout;
+        let startRecordingTime;
+        let messageCounter = 0;
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = handleAudioData;
+
+                mediaRecorder.start();
+                startRecordingTime = Date.now();
+
+                document.querySelector(".record-button:nth-of-type(1)").style.display = "none";
+                document.querySelector(".record-button:nth-of-type(2)").style.display = "inline-block";
+
+                recordingTimeout = setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === "recording") {
+                        mediaRecorder.stop();
+                    }
+                }, 60000);
+            } catch (error) {
+                alert("无法开始录音，请检查权限。");
+            }
+        }
+
+        function stopRecording() {
+            document.querySelector(".record-button:nth-of-type(1)").style.display = "none";
+            document.querySelector(".record-button:nth-of-type(2)").style.display = "none";  // 顺序注意 要在当前页面有
+            document.querySelector(".loading-circle").style.display = "block"; // 显示加载圈
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                const elapsedSeconds = (Date.now() - startRecordingTime) / 1000;
+
+                if (elapsedSeconds < 2) {
+                    alert("请至少录音两秒钟！");
+                    return;
+                }
+
+                mediaRecorder.stop(); //检测器检测 停止传信息给handleAudioData()
+                clearTimeout(recordingTimeout);
+
+            }
+        }
+
+        function handleAudioData() {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            audioChunks = [];
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.wav');
+            formData.append('chat_id', chatId);
+
+            fetch('/post/gptnew/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    messageCounter++;
+                    const dialogueContainer = document.querySelector(".dialogue-container");
+                    const userMessageElem = document.createElement("div");
+
+                    document.querySelector(".loading-circle").style.display = "none"; // 隐藏加载圈
+                    document.querySelector(".dialogue-container").style.display = "block"; // 显示对话框
+
+                    userMessageElem.className = "user-message";
+                    userMessageElem.innerText = messageCounter + ". 用户: " + (data.user_transcript || "输入");
+                    dialogueContainer.appendChild(userMessageElem);
+
+                    const gptMessageElem = document.createElement("div");
+                    gptMessageElem.className = "gpt-message";
+                    gptMessageElem.innerText = "GPT: " + (data.gpt_response || "等待响应");
+                    dialogueContainer.appendChild(gptMessageElem);
+
+                     //重置开始按钮
+                    document.querySelector(".record-button:nth-of-type(1)").style.display = "inline-block";
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+</body>
+
+</html>
