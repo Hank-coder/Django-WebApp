@@ -1,7 +1,11 @@
 import openai
+from django.http import JsonResponse
+
+from .utils import get_apikey
 
 # Set the API base URL and key (ensure these values are stored securely)
-openai.api_key = ""
+
+get_apikey(openai)
 
 
 def generate_system_message(user_inputs, results_dict_cls, exif_dict):
@@ -81,3 +85,33 @@ def get_completion_from_messages(
         max_tokens=max_tokens,
     )
     return response.choices[0].message["content"]
+
+
+# 调用chatgpt 语音 API
+def generate_corrected_transcript(temperature, audio_file):
+    system_prompt = "Please help me answer the question from client, default language use Simplified Chinese"
+
+    # 转录用户的语音输入
+    user_transcript = openai.Audio.transcribe("whisper-1", audio_file).text
+
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        temperature=temperature,
+        messages=[
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": user_transcript
+            }
+        ]
+    )
+
+    gpt_response = response['choices'][0]['message']['content']
+    # 返回用户的转录文本和GPT的响应
+    return {
+        'user_transcript': user_transcript,
+        'gpt_response': gpt_response
+    }

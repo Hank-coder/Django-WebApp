@@ -1,9 +1,11 @@
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 import os
 from django.conf import settings
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import (
     ListView,
     DetailView,
@@ -12,8 +14,9 @@ from django.views.generic import (
     DeleteView
 )
 
+from .detectImage.detectVoice.audio2text import gpt_audio_response
 from .detectImage.generate_text import generate_text
-from .models import Post, Category
+from .models import Post, Category, PostAudio
 import operator
 from django.urls import reverse_lazy
 from django.contrib.staticfiles.views import serve
@@ -86,7 +89,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     # fields = ['file', 'language', 'platform', 'photo_category', 'special_request']
     form_class = PostForm  # 使用我们定义的表单
 
-    def form_valid(self, form): # 后端处理
+    def form_valid(self, form):  # 后端处理
         form.instance.author = self.request.user
 
         # First save the form to ensure that the file is saved
@@ -150,3 +153,31 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 def about(request):
     return render(request, 'blog/about.html', {'title': 'About'})
+
+
+class GPTAudioCreateView(LoginRequiredMixin, CreateView):
+    model = PostAudio
+    template_name = 'blog/gpt_audio.html'
+    fields = ['request', 'generate_text', 'chat_id']
+
+    @method_decorator(csrf_exempt)  # 确保这个view可以被上面的JS代码POST
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    # 处理提交的文件
+    def post(self, request, *args, **kwargs):
+        audio_file = request.FILES.get('audio')
+        if audio_file:
+            response_data = gpt_audio_response(audio_file, self.request.user)
+            user_transcript = response_data.get('user_transcript')
+            gpt_response = response_data.get('gpt_response')
+            chat_id = request.POST.get('chat_id')
+            # 创建新的PostAudio对象并保存到数据库
+            post_audio = PostAudio(author=self.request.user, request=user_transcript, generate_text=gpt_response,
+                                   chat_id=chat_id)
+            post_audio.save()
+
+            # 如果想要在响应中返回更多数据，您可以在此处修改
+            return JsonResponse(response_data, status=200)
+
+        return JsonResponse({'message': 'No audio received.'}, status=400)

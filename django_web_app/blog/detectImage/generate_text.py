@@ -8,7 +8,7 @@ import shutil
 import os
 from .utils import extract_exif_info
 # Generate the message
-from .gpt_connect import generate_system_message
+from .gpt_generate import generate_system_message
 
 
 def generate_text(file_path, other_data):

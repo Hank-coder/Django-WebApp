@@ -6,9 +6,11 @@ from tkinter import filedialog
 import os
 
 # UI 交互界面
+import configparser
 
 # Global variable to hold the Tk instance
 tk_instance = None
+
 
 #
 # def open_file_dialog():
@@ -177,3 +179,12 @@ def extract_exif_info(file_path):
     else:
         print("No file selected.")
         return None, None
+
+
+def get_apikey(openai):
+    api_key = os.environ.get('OPENAI_API_KEY')
+    if api_key:
+        openai.api_key = api_key
+    else:
+        print("API key not set!")
+
