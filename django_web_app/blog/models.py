@@ -33,7 +33,7 @@ class Post(models.Model):
     language = models.ForeignKey(Language, on_delete=models.CASCADE, default=1)
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, default=1)
     photo_category = models.ManyToManyField(Category)  # 从数据库获取内容
-    special_request = models.TextField(default="no req")
+    special_request = models.TextField(default="")
     generate_text = models.TextField(default="no text")
     date_posted = models.DateTimeField(default=timezone.now)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
