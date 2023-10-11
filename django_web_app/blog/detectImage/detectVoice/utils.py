@@ -15,6 +15,11 @@ def save_audio_file(audio_file, user_info):
         # Build the full file path
         file_path = os.path.join(settings.BASE_DIR, "blog", "detectImage", "detectVoice", "record", new_file_name)
 
+        # Ensure the directory exists
+        directory = os.path.dirname(file_path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         with open(file_path, 'wb+') as destination:
             for chunk in audio_file.chunks():
                 destination.write(chunk)
