@@ -158,13 +158,13 @@
         }
 
         function handleAudioData() {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             audioChunks = [];
 
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             const formData = new FormData();
-            formData.append('audio', audioBlob, 'recording.wav');
+            formData.append('audio', audioBlob, 'recording.webm');
             formData.append('chat_id', chatId);
 
             fetch('/post/gptnew/', {
