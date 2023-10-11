@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 django_web_app/media
 django_web_app/blog/detectImage/detectVoice/record
+image_detect/predict
