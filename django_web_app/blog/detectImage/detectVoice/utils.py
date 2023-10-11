@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from django.conf import settings
 from django.http import JsonResponse
@@ -24,11 +25,24 @@ def save_audio_file(audio_file, user_info):
             for chunk in audio_file.chunks():
                 destination.write(chunk)
 
+        # switch webm to wav to access chatgpt
+
+        # 调用上述函数
+        convert_webm_to_wav(file_path,
+                            file_path.replace('.webm', '.wav'))
+
+        # 转换文件
         # Print the file path for debugging purposes
-        print(file_path)
+        print(file_path.replace('.webm', '.wav'))
 
         # 返回一个响应
-        return file_path
+        return file_path.replace('.webm', '.wav')
 
     # Handle the case where no audio file was provided
     return JsonResponse({'message': 'No audio file provided.'}, status=400)
+
+
+# switch webm to wav to access chatgpt
+def convert_webm_to_wav(input_path, output_path):
+    command = ['ffmpeg', '-y', '-i', input_path, output_path]
+    subprocess.run(command)
