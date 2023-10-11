@@ -49,8 +49,21 @@
             alert('Select at least one file! 请选择一个图片文件进行上传!');
             return false;  // This will prevent form submission
         }
+
+        // Check other fields
+        const language = document.querySelector('[name="language"]').value;
+        const platform = document.querySelector('[name="platform"]').value;
+        const photo_category = document.querySelector('[name="photo_category"]').value;
+        const special_request = document.querySelector('[name="special_request"]').value;
+
+        if (!language || !platform || !photo_category || !special_request) {
+            alert('Please fill in all the fields! 请填写所有字段！');
+            return false;  // This will prevent form submission
+        }
+
         return true;
     }
+
     function previewFile() {
         const preview = document.getElementById('filePreview');
         const file = document.getElementById('fileInput').files[0];
