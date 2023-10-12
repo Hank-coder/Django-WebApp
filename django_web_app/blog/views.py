@@ -209,7 +209,7 @@ class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 # 更新并保存记录
                 print(edited_text)
                 record.request = edited_text
-                record.generate_text = gpt_text_response(edited_text)
+                record.generate_text = gpt_text_response(edited_text).get('gpt_response')
                 record.date_posted = timezone.now()
                 record.save()
                 # print(gpt_text_response(edited_text))
