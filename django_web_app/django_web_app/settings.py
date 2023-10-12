@@ -24,7 +24,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.249.61', '127.0.0.1']
+ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.203.214', '127.0.0.1']
+
+# 服务器端Https启用
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
@@ -91,7 +93,7 @@ DATABASES = {
         'NAME': 'webdata',
         'USER': 'root',
         'PASSWORD': '!@cyh1qw23er45T',
-        'HOST': '38.60.249.61',  # Set to the address of your MySQL server
+        'HOST': '38.60.203.214',  # Set to the address of your MySQL server
         'PORT': '3306',  # Default MySQL port
         'OPTIONS': {
             'charset': 'utf8mb4',
