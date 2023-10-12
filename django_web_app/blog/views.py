@@ -1,9 +1,13 @@
+import json
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 import os
 from django.conf import settings
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import (
@@ -14,7 +18,7 @@ from django.views.generic import (
     DeleteView
 )
 
-from .detectImage.detectVoice.audio2text import gpt_audio_response
+from .detectImage.detectVoice.audio2text import gpt_audio_response, gpt_text_response
 from .detectImage.generate_text import generate_text
 from .models import Post, Category, PostAudio
 import operator
@@ -178,6 +182,48 @@ class GPTAudioCreateView(LoginRequiredMixin, CreateView):
             post_audio.save()
 
             # 如果想要在响应中返回更多数据，您可以在此处修改
-            return JsonResponse(response_data, status=200)
+            return JsonResponse(response_data, status=200)  # user_transcript, gpt_response
 
         return JsonResponse({'message': 'No audio received.'}, status=400)
+
+
+class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = PostAudio
+
+    @method_decorator(csrf_exempt)  # 确保这个view可以被上面的JS代码POST
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        # template_name = 'blog/post_form.html'
+        # fields = ['request', 'generate_text', 'chat_id']  # 需要更新的字段
+        try:
+            data = json.loads(request.body)
+            edited_text = data.get('text')
+            chat_id = data.get('chat_id')
+
+            # 寻找相同chat_id并检索最新的date_posted数据
+            record = PostAudio.objects.filter(chat_id=chat_id).order_by('-date_posted').first()
+
+            if record:
+                # 更新并保存记录
+                print(edited_text)
+                record.request = edited_text
+                record.generate_text = gpt_text_response(edited_text)
+                record.date_posted = timezone.now()
+                record.save()
+                # print(gpt_text_response(edited_text))
+                # 返回成功信息和更新后的文本
+                return JsonResponse(gpt_text_response(edited_text), status=200)
+
+            else:
+                # 如果没有找到匹配的记录
+                return JsonResponse({"success": False, "error": "Record not found"})
+
+        except ObjectDoesNotExist:
+            return JsonResponse({"success": False, "error": "Record not found"})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+
+    def test_func(self):
+        return True

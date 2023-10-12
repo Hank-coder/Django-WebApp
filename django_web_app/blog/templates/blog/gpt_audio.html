@@ -73,16 +73,56 @@
         }
 
         .user-message {
-            background-color: #e3f2fd;
-            text-align: left;
-            color: blue;
-        }
+        background-color: #e3f2fd;
+        text-align: left;
+        color: blue;
+        position: relative;  /* 添加这一行 */
+    }
 
         .gpt-message {
             background-color: #e8f5e9;
             text-align: left;
             color: green;
         }
+
+         /* 添加文本框的样式 */
+        .message-content input {
+            width: 90%;  /* 宽度设为90% */
+            padding: 5px;  /* 增加内边距 */
+            border: 1px solid #ccc;  /* 灰色边框 */
+            border-radius: 4px;  /* 圆角 */
+            font-size: 16px;  /* 字体大小 */
+        }
+
+         /* 悬浮"Save"按钮样式 */
+        .floating-save-button {
+            display: none;  /* 默认隐藏 */
+            position: fixed;  /* 固定位置 */
+            bottom: 20px;  /* 距离底部20px */
+            right: 20px;  /* 距离右侧20px */
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;  /* 保证在其他元素之上 */
+        }
+
+        .floating-save-button:hover {
+            background-color: #45a049;
+        }
+        .save-button {
+            background-color: #007BFF;  /* 按钮背景颜色 */
+            color: white;               /* 按钮文字颜色 */
+            padding: 10px 20px;        /* 按钮内边距 */
+            border: none;              /* 无边框 */
+            border-radius: 4px;        /* 圆角边框 */
+            cursor: pointer;           /* 鼠标悬停时显示为手型 */
+            display: block;            /* 使按钮作为块级元素 */
+            margin: 10px auto;         /* 上下外边距为10px，左右自动居中 */
+        }
+
     </style>
 </head>
 
@@ -93,7 +133,8 @@
         <button class="record-button" onclick="stopRecording()" style="display:none;">停止录音</button>
         <div class="loading-circle"></div> <!-- 正在处理的小圆圈提示 -->
     </div>
-
+     <!-- 添加悬浮"Save"按钮 -->
+    <button class="floating-save-button" onclick="submitEditedMessage()">Save</button>
 
 
     <script>
@@ -140,23 +181,27 @@
         }
 
         function stopRecording() {
-            document.querySelector(".record-button:nth-of-type(1)").style.display = "none";
-            document.querySelector(".record-button:nth-of-type(2)").style.display = "none";  // 顺序注意 要在当前页面有
-            document.querySelector(".loading-circle").style.display = "block"; // 显示加载圈
+
             if (mediaRecorder && mediaRecorder.state === "recording") {
                 const elapsedSeconds = (Date.now() - startRecordingTime) / 1000;
 
                 if (elapsedSeconds < 2) {
                     alert("请至少录音两秒钟！");
+                    clearTimeout(recordingTimeout);
+                    document.querySelector(".record-button:nth-of-type(1)").style.display = "inline-block";
+                    document.querySelector(".record-button:nth-of-type(2)").style.display = "none";
                     return;
                 }
+                document.querySelector(".record-button:nth-of-type(1)").style.display = "none";
+                document.querySelector(".record-button:nth-of-type(2)").style.display = "none";  // 顺序注意 要在当前页面有
+                document.querySelector(".loading-circle").style.display = "block"; // 显示加载圈
 
                 mediaRecorder.stop(); //检测器检测 停止传信息给handleAudioData()
                 clearTimeout(recordingTimeout);
 
             }
         }
-
+        // 处理录音
         function handleAudioData() {
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             audioChunks = [];
@@ -184,7 +229,7 @@
                     document.querySelector(".dialogue-container").style.display = "block"; // 显示对话框
 
                     userMessageElem.className = "user-message";
-                    userMessageElem.innerText = messageCounter + ". 用户: " + (data.user_transcript || "输入");
+                    userMessageElem.innerHTML = `${messageCounter}. 用户: <span class="message-content">${data.user_transcript || "输入"}</span>`;
                     dialogueContainer.appendChild(userMessageElem);
 
                     const gptMessageElem = document.createElement("div");
@@ -199,6 +244,91 @@
                     console.error('Error:', error);
                 });
         }
+        // 编辑按钮监听
+        document.body.addEventListener('click', async function(event) {
+
+            const messageElem = event.target.closest('.user-message');
+            const existingInputElem = document.querySelector('.user-message .message-content input');
+            const saveButton = document.querySelector('.user-message .message-content .save-button');
+
+            if (event.target.classList.contains('save-button')) {
+
+                document.querySelector(".record-button:nth-of-type(1)").style.display = "none";
+                document.querySelector(".record-button:nth-of-type(2)").style.display = "none";
+                document.querySelector(".loading-circle").style.display = "block"; // 显示加载圈
+                const messageContentElem = saveButton.parentElement;
+                const editedText = existingInputElem.value;
+
+                // 发送请求到后端
+                try {
+                    const response = await fetch('/update/gptnew/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            text: editedText,
+                            chat_id:chatId
+                        })
+                    });
+
+                    const responseData = await response.json();
+                    //console.log(responseData);
+                    // 假设后端返回的数据结构为 { answer: 'Your answer here' }
+                    if (responseData) {
+                        clearAllDialogues();
+                        updateDialogues(responseData.user_transcript, responseData.gpt_response);
+                        document.querySelector(".record-button:nth-of-type(1)").style.display = "inline-block";
+                        document.querySelector(".loading-circle").style.display = "none";
+                        //messageContentElem.innerText = responseData.answer;
+                    } else {
+                        // 如果后端没有返回期望的数据结构，恢复原始内容
+                        //messageContentElem.innerText = messageContentElem.dataset.originalText;
+                    }
+                } catch (error) {
+                    console.error('Error sending data to backend:', error);
+                    messageContentElem.innerText = messageContentElem.dataset.originalText;
+                }
+            }
+            else if (messageElem) {
+                const messageContentElem = messageElem.querySelector('.message-content');
+
+                if (!existingInputElem) {
+                    const originalText = messageContentElem.innerText;
+                    messageContentElem.dataset.originalText = originalText;
+                    messageContentElem.innerHTML = `<input type="text" value="${originalText}"> <button class="save-button">重新生成</button>`;
+                    //messageContentElem.querySelector('input').focus();
+                }
+            } else if (existingInputElem && !event.target.classList.contains('save-button')) {
+                const messageContentElem = existingInputElem.parentElement;
+                messageContentElem.innerText = messageContentElem.dataset.originalText;
+            }
+    });
+
+    // 这个函数用来更新对话
+    function updateDialogues(user_transcript, gpt_response) {
+        messageCounter = 1
+        const dialogueContainer = document.querySelector(".dialogue-container");
+        dialogueContainer.innerHTML = "";  // 清空对话框内的内容
+
+        const userMessageElem = document.createElement("div");
+        userMessageElem.className = "user-message";
+        userMessageElem.innerHTML = `${messageCounter}. 用户: <span class="message-content">${user_transcript || "输入"}</span>`;
+        dialogueContainer.appendChild(userMessageElem);
+
+        const gptMessageElem = document.createElement("div");
+        gptMessageElem.className = "gpt-message";
+        gptMessageElem.innerText = "GPT: " + (gpt_response || "等待响应");
+        dialogueContainer.appendChild(gptMessageElem);
+    }
+
+    // 这个函数用来清空所有对话
+    function clearAllDialogues() {
+        const dialogueContainer = document.querySelector(".dialogue-container");
+        dialogueContainer.innerHTML = "";
+    }
+
+
     </script>
 </body>
 

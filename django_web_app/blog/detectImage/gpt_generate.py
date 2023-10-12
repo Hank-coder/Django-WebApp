@@ -115,3 +115,29 @@ def generate_corrected_transcript(temperature, audio_file):
         'user_transcript': user_transcript,
         'gpt_response': gpt_response
     }
+
+
+def generate_corrected_text(temperature, text_info):
+    system_prompt = "Please help me answer the question from user, default language use Simplified Chinese"
+
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        temperature=temperature,
+        messages=[
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": text_info
+            }
+        ]
+    )
+
+    gpt_response = response['choices'][0]['message']['content']
+    # 返回用户的转录文本和GPT的响应
+    return {
+        'user_transcript': text_info,
+        'gpt_response': gpt_response
+    }
