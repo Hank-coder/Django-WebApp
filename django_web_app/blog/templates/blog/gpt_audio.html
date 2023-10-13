@@ -5,7 +5,7 @@
     <meta name="csrf-token" content="{{ csrf_token }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>录音功能</title>
+    <title>GPT对话功能</title>
     <style>
         /* 基础样式 */
         body {
@@ -122,6 +122,16 @@
             display: block;            /* 使按钮作为块级元素 */
             margin: 10px auto;         /* 上下外边距为10px，左右自动居中 */
         }
+        /* 添加使用说明的样式 */
+        .instruction {
+            margin-top: 10px;
+            background-color: #fff3cd; /* light yellow */
+            color: #856404; /* brown */
+            padding: 10px;
+            border: 1px solid #ffeeba; /* border color */
+            border-radius: 5px;
+            font-size: 14px;
+        }
 
     </style>
 </head>
@@ -129,12 +139,15 @@
 <body>
     <div class="dialogue-container"></div>
     <div class="recording-container">
-        <button class="record-button" onclick="startRecording()" >开始录音</button>
-        <button class="record-button" onclick="stopRecording()" style="display:none;">停止录音</button>
+        <button class="record-button" onclick="startRecording()" >开始对话</button>
+        <button class="record-button" onclick="stopRecording()" style="display:none;">停止对话</button>
         <div class="loading-circle"></div> <!-- 正在处理的小圆圈提示 -->
     </div>
      <!-- 添加悬浮"Save"按钮 -->
     <button class="floating-save-button" onclick="submitEditedMessage()">Save</button>
+
+    <div class="instruction">GPT对话系统 <br> 点击“开始对话”按钮系统开始录音,点击“停止对话”按钮结束录音 <br>
+        如果回答与要求不符 可在下一个页面点击您的输入 重新生成答案</div>
 
 
     <script>
@@ -155,6 +168,8 @@
 
         async function startRecording() {
             try {
+                document.querySelector(".instruction").style.display = "none"; // 隐藏提示框
+
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
 
@@ -229,7 +244,7 @@
                     document.querySelector(".dialogue-container").style.display = "block"; // 显示对话框
 
                     userMessageElem.className = "user-message";
-                    userMessageElem.innerHTML = `${messageCounter}. 用户: <span class="message-content">${data.user_transcript || "输入"}</span>`;
+                    userMessageElem.innerHTML = `${messageCounter}. &nbsp;<span class="message-content">${data.user_transcript || "输入"}</span>`;
                     dialogueContainer.appendChild(userMessageElem);
 
                     const gptMessageElem = document.createElement("div");
@@ -313,7 +328,7 @@
 
         const userMessageElem = document.createElement("div");
         userMessageElem.className = "user-message";
-        userMessageElem.innerHTML = `${messageCounter}. 用户: <span class="message-content">${user_transcript || "输入"}</span>`;
+         userMessageElem.innerHTML = `${messageCounter}. &nbsp;<span class="message-content">${data.user_transcript || "输入"}</span>`;
         dialogueContainer.appendChild(userMessageElem);
 
         const gptMessageElem = document.createElement("div");

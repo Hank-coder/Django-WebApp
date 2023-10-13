@@ -1,5 +1,0 @@
-0.53 dam
-0.08 cliff
-0.06 viaduct
-0.05 steel_arch_bridge
-0.05 breakwater

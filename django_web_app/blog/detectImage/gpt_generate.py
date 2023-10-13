@@ -13,7 +13,7 @@ def generate_system_message(user_inputs, results_dict_cls, exif_dict):
     categories = user_inputs['photo_category']
     category_names = [str(category) for category in categories]
     category_str = ', '.join(category_names)
-    if user_inputs['platform'].name == 'WeChat' or user_inputs['platform'].name == 'Xiaohongshu':
+    if user_inputs['platform'].name == '微信' or user_inputs['platform'].name == '小红书':
         system_message = f"""
         
         You will be act to share a {user_inputs['platform']} Moments and only use {user_inputs['language']} language 

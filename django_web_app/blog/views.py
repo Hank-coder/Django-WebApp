@@ -78,7 +78,7 @@ class PostDetailView(DetailView):
     template_name = 'blog/post_detail.html'
 
 
-class PostForm(forms.ModelForm):
+class PostForm(forms.ModelForm): # 定义的表单
     class Meta:
         model = Post
         fields = ['file', 'language', 'platform', 'photo_category', 'special_request']
@@ -88,7 +88,7 @@ class PostForm(forms.ModelForm):
         widget=forms.SelectMultiple(attrs={'size': '10'}))
 
 
-class PostCreateView(LoginRequiredMixin, CreateView):
+class PostCreateView(LoginRequiredMixin, CreateView):  # 朋友圈文本生成
     template_name = 'blog/post_form.html'
     # fields = ['file', 'language', 'platform', 'photo_category', 'special_request']
     form_class = PostForm  # 使用我们定义的表单

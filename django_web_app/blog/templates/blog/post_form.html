@@ -3,28 +3,28 @@
 {% block content %}
 
     <div class="content-section pt-2 mt-3 shadow-lg"  >
-          <form action="" method="POST" enctype="multipart/form-data">  <!--enctype="multipart/form-data"，这是处理文件上传所必需的-->
+          <form action="" method="POST" enctype="multipart/form-data">  <!--enctype="multipart/form-data"，这是处理文件上传所必需的 刷新页面！-->
               {% csrf_token %}
               <fieldset class="form-group">
                     <legend class="border-bottom mb-4">
-                        Post
+                        文本生成
                     </legend>
 
                   <!-- File Field with preview, USE JAVASCRIPT-->
-                <label for="fileInput">File:</label>
+                <label for="fileInput">图片上传:</label>
                 <input id="fileInput" type="file" name="file" onchange="previewFile()" />
                 <img id="filePreview" src="#" alt="File preview" style="display: none; width: 100%;" />
                 <br><br>
 
                 <!-- Other fields rendered manually, REPLACE {{ form|crispy }}-->
-                {{ form.language|as_crispy_field }}
-                {{ form.platform|as_crispy_field }}
-                {{ form.photo_category|as_crispy_field }}
-                {{ form.special_request|as_crispy_field }}
+                <div> 语言 {{ form.language|as_crispy_field }} </div>
+                <div> 平台 {{ form.platform|as_crispy_field }}   </div>
+                <div> 图片类型 {{ form.photo_category|as_crispy_field }}</div>
+                <div> 生成要求 {{ form.special_request|as_crispy_field }} </div>
               </fieldset>
               <div class="form-group d-flex justify-content-start align-items-center">
                 <button class="btn btn-outline-primary" type="submit" onclick="validateForm() && showLoadingMessage()">
-                    <i class="fas fa-upload"></i> Upload 上传
+                    <i class="fas fa-upload"></i> 生成内容
                 </button>
                 <!-- 加载旋转器和提示消息 -->
                 <div id="loadingMessage" class="ml-3 d-none">
