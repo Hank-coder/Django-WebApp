@@ -1,57 +1,73 @@
 {% extends "blog/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link  href="{% static 'base/maxcdn.bootstrapcdn.com_bootstrap_4.5.2_css_bootstrap.min.css'%}" rel="stylesheet">
+<style>
+    #carouselExampleIndicators {
+        width: 100%; /* 滚动框宽度设为100% */
+        height: 100%; /* 滚动框高度设为100% */
+    }
+    .carousel-inner img {
+        height: auto; /* 图片高度自动 */
+        max-height: 100%; /* 图片最大高度为100% */
+        width: auto; /* 图片宽度自动 */
+        max-width: 100%; /* 图片最大宽度为100% */
+        margin: 0 auto; /* 图片水平居中 */
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'base/ajax.googleapis.com_ajax_libs_jquery_3.5.1_jquery.min.js' %}"></script>
+<script src="{% static 'base/cdnjs.cloudflare.com_ajax_libs_popper.js_1.16.0_umd_popper.min.js' %}"></script>
+<script src="{% static 'base/maxcdn.bootstrapcdn.com_bootstrap_4.5.2_css_bootstrap.min.css' %}"></script>
+{% endblock %}
 {% block content %}
-    {% for post in posts %}
-        {% if post.author == user %}
-      <div class="jumbotron mt-3 bg-white shadow-lg">
-      <article class="media content-section shadow">
-        <a href="{{ post.author.profile.image.url }} " target="_blank"> <img src="{{ post.author.profile.image.url }}  " alt="" class="article-img rounded-circle img-thumbnail img-fluid shadow">
-        </a>
-        <div class="media-body">
-          <div class="article-metadata d-flex justify-content-between">
-            <a class="mr-2 " href="{% url 'user-posts' post.author.username  %}"><h3>{{ post.author }}</h3></a>
-              <small class="text-muted">{{ post.date_upload|date:"F d, Y" }}</small>
-          </div>
-          {% if post.file %}
-          <a href="{{ post.file.url }}"  download class="text-dark text-justify "><h5>{{ post.blog }}</h5></a>
-          {% endif %}
-     
-      
-     
-          <h2><a class="article-title text-justify " href="{% url 'post-detail' post.id %}">{{ post.title }}</a></h2>
-          <div class="d-flex justify-content-between">
-            <p class="article-content text-justify text-truncate overflow-hidden">{{ post.content }}</p>
-            {% if post.file %}
-          <div class="form-group mt-0 pt-0  m-2">          
-            <a class="btn btn-outline-primary  btn-d "  href="{{ post.file.url }}"  download type="submit"><i class="fas fa-download"></i></a>
-          </div>
-          {% endif %}
-        
-          </div>
-      
+<div class="content-section pt-2 mt-3 shadow-lg">
+    <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
+        <ol class="carousel-indicators">
+            <li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
+            <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
+            <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
+        </ol>
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <a>
+                    <img src="{% static 'home/img.png' %}" class="d-block w-100" alt="Image 1">
+                </a>
+                <div class="carousel-caption">
+                    欢迎使用本系统！
+                </div>
+            </div>
+            <div class="carousel-item">
+                <a href="{% url 'gpt-audio' %}">
+                    <img src="{% static 'home/img_1.png' %}" class="d-block w-100" alt="Image 2">
+                </a>
+                <div class="carousel-caption">
+                    进入语音交互功能！
+                </div>
+            </div>
+            <div class="carousel-item">
+                <a href="{% url 'post-create' %} ">
+                    <img src="{% static 'home/img_2.png' %}" class="d-block w-100" alt="Image 3">
+                </a>
+                <div class="carousel-caption">
+                    进入朋友圈文本生成功能！
+                </div>
+            </div>
         </div>
-      </article>
-      </div>
-    {% endif %}
-    {% endfor %}
-    {% if is_paginated %}
-
-      {% if page_obj.has_previous %}
-        <a class="btn btn-outline-info mb-4" href="?page=1">First</a>
-        <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-      {% endif %}
-
-      {% for num in page_obj.paginator.page_range %}
-        {% if page_obj.number == num %}
-          <a class="btn btn-info mb-4" href="?page={{ num }}">{{ num }}</a>
-        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-          <a class="btn btn-outline-info mb-4" href="?page={{ num }}">{{ num }}</a>
-        {% endif %}
-      {% endfor %}
-
-      {% if page_obj.has_next %}
-        <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.next_page_number }}">Next</a>
-        <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-      {% endif %}
-
-    {% endif %}
+        <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+        </a>
+    </div>
+</div>
 {% endblock content %}
+
+
+

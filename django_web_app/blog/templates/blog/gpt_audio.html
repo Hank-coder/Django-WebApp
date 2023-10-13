@@ -132,6 +132,25 @@
             border-radius: 5px;
             font-size: 14px;
         }
+           /* 新添加的返回主页面按钮样式 */
+        .return-to-main-button {
+            position: fixed;  /* 固定位置 */
+            bottom: 20px;     /* 距离底部20px */
+            right: 20px;      /* 距离右侧20px */
+            background-color: #FF5722;  /* 橙红色背景颜色 */
+            color: white;               /* 按钮文字颜色 */
+            padding: 10px 20px;        /* 按钮内边距 */
+            border: none;              /* 无边框 */
+            border-radius: 4px;        /* 圆角边框 */
+            cursor: pointer;           /* 鼠标悬停时显示为手型 */
+            z-index: 999;              /* 保证在其他元素之下 */
+        }
+
+        .return-to-main-button:hover {
+            background-color: #E64A19;  /* 悬停时的颜色 */
+        }
+    </style>
+</head>
 
     </style>
 </head>
@@ -148,6 +167,8 @@
 
     <div class="instruction">GPT对话系统 <br> 点击“开始对话”按钮系统开始录音,点击“停止对话”按钮结束录音 <br>
         如果回答与要求不符 可在下一个页面点击您的输入 重新生成答案</div>
+      <!-- 新添加的返回主页面按钮 -->
+    <button class="return-to-main-button" onclick="returnToMain()">返回主页面</button>
 
 
     <script>
@@ -343,7 +364,10 @@
         dialogueContainer.innerHTML = "";
     }
 
-
+     // 新添加的返回主页面函数
+      function returnToMain() {
+            window.location.href = "{% url 'blog-home' %}";   // 使用url django跳转返回
+        }
     </script>
 </body>
 

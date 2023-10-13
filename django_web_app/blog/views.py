@@ -54,12 +54,16 @@ def getfile(request):
     return serve(request, 'File')
 
 
+# class PostListView(ListView):
+#     model = Post
+#     template_name = 'blog/home.html'  # <app>/<model>_<viewtype>.html
+#     context_object_name = 'posts'
+#     ordering = ['-date_posted']
+#     paginate_by = 2
+
 class PostListView(ListView):
     model = Post
-    template_name = 'blog/home.html'  # <app>/<model>_<viewtype>.html
-    context_object_name = 'posts'
-    ordering = ['-date_posted']
-    paginate_by = 2
+    template_name = 'blog/home.html'
 
 
 class UserPostListView(ListView):
@@ -78,7 +82,7 @@ class PostDetailView(DetailView):
     template_name = 'blog/post_detail.html'
 
 
-class PostForm(forms.ModelForm): # 定义的表单
+class PostForm(forms.ModelForm):  # 定义的表单
     class Meta:
         model = Post
         fields = ['file', 'language', 'platform', 'photo_category', 'special_request']

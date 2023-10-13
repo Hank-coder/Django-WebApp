@@ -2,7 +2,8 @@
 <!doctype html>
 <html lang="en">
   <head>
-    
+
+
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -11,6 +12,13 @@
     <link rel="stylesheet" href="{% static 'base/stackpath.bootstrapcdn.com_bootstrap_4.3.1_css_bootstrap.min.css' %}" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'base/use.fontawesome.com_releases_v5.8.1_css_all.css' %}" >
     <link rel="stylesheet" href="{% static 'blog/main.css' %}">
+
+   <style>
+    body {
+        background-color: #CCCCCC; /* 这是深灰色的十六进制代码 */
+    }
+    </style>
+
     {% if title %}
         <title>WebApp - {{title}}</title>
     {% else %}
