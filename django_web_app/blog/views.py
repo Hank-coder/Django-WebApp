@@ -164,6 +164,7 @@ class GPTAudioCreateView(LoginRequiredMixin, CreateView):
     template_name = 'blog/gpt_audio.html'
     fields = ['request', 'generate_text', 'chat_id']
 
+    @method_decorator(csrf_exempt)  # 确保这个view可以被上面的JS代码POST
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
 
@@ -189,6 +190,7 @@ class GPTAudioCreateView(LoginRequiredMixin, CreateView):
 class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = PostAudio
 
+    @method_decorator(csrf_exempt)  # 确保这个view可以被上面的JS代码POST
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
 

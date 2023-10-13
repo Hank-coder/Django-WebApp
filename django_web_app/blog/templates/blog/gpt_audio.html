@@ -328,7 +328,7 @@
 
         const userMessageElem = document.createElement("div");
         userMessageElem.className = "user-message";
-         userMessageElem.innerHTML = `${messageCounter}. &nbsp;<span class="message-content">${data.user_transcript || "输入"}</span>`;
+         userMessageElem.innerHTML = `${messageCounter}. &nbsp;<span class="message-content">${user_transcript || "输入"}</span>`;
         dialogueContainer.appendChild(userMessageElem);
 
         const gptMessageElem = document.createElement("div");
