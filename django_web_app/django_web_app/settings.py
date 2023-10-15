@@ -27,10 +27,10 @@ DEBUG = True
 ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.203.214', '127.0.0.1', 'dedi2.1808.cf']
 
 # 服务器端Https启用
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# SECURE_SSL_REDIRECT = True
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 # Application definition
 
 INSTALLED_APPS = [
