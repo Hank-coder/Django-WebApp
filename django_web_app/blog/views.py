@@ -178,7 +178,7 @@ class GPTAudioCreateView(LoginRequiredMixin, CreateView):
         if audio_file:
             response_data = gpt_audio_response(audio_file, self.request.user)
             user_transcript = response_data.get('user_transcript')
-            gpt_response = response_data.get('gpt_response')
+            gpt_response = clean_text(response_data.get('gpt_response'))
             chat_id = request.POST.get('chat_id')
             # 创建新的PostAudio对象并保存到数据库
             post_audio = PostAudio(author=self.request.user, request=user_transcript, generate_text=gpt_response,
@@ -211,12 +211,12 @@ class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
             if record:
                 # 更新并保存记录
-                print(edited_text)
+                # print(edited_text)
                 record.request = edited_text
-                record.generate_text = gpt_text_response(edited_text).get('gpt_response')
+                record.generate_text = clean_text(gpt_text_response(edited_text).get('gpt_response'))
                 record.date_posted = timezone.now()
                 record.save()
-                # print(gpt_text_response(edited_text))
+                # print(gpt_text_response(edited_text).get('gpt_response'))
                 # 返回成功信息和更新后的文本
                 return JsonResponse(gpt_text_response(edited_text), status=200)
 
@@ -231,3 +231,12 @@ class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def test_func(self):
         return True
+
+
+def clean_text(text):
+    # 去除换行
+    cleaned_text = text.replace('\n', ' ')
+    # 去除制表符
+    cleaned_text = cleaned_text.replace('\t', ' ')
+    # 如果还有其他特定字符或字符串需要替换，你可以继续添加更多的.replace()方法
+    return cleaned_text

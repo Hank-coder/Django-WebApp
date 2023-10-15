@@ -109,7 +109,10 @@ def generate_corrected_transcript(temperature, audio_file):
         ]
     )
 
-    gpt_response = response['choices'][0]['message']['content']
+    try:
+        gpt_response = response['choices'][0]['message']['content']
+    except KeyError:
+        gpt_response = "Error: Unexpected response structure from the API."
     # 返回用户的转录文本和GPT的响应
     return {
         'user_transcript': user_transcript,
@@ -118,10 +121,10 @@ def generate_corrected_transcript(temperature, audio_file):
 
 
 def generate_corrected_text(temperature, text_info):
-    system_prompt = "Please help me answer the question from user, default language use Simplified Chinese"
+    system_prompt = "Please help me answer the question from user"
 
     response = openai.ChatCompletion.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         temperature=temperature,
         messages=[
             {
@@ -135,7 +138,10 @@ def generate_corrected_text(temperature, text_info):
         ]
     )
 
-    gpt_response = response['choices'][0]['message']['content']
+    try:
+        gpt_response = response['choices'][0]['message']['content']
+    except KeyError:
+        gpt_response = "Error: Unexpected response structure from the API."
     # 返回用户的转录文本和GPT的响应
     return {
         'user_transcript': text_info,
