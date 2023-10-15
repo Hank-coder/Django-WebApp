@@ -24,13 +24,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.203.214', '127.0.0.1']
+ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.203.214', '127.0.0.1', 'dedi2.1808.cf']
 
 # 服务器端Https启用
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_SSL_REDIRECT = True
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
 # Application definition
 
 INSTALLED_APPS = [
@@ -135,11 +135,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 # 如果您的静态文件不在app的默认static文件夹下，您需要设置 STATICFILES_DIRS 以指向它们
-# STATICFILES_DIRS = [os.path.join(BASE_DIR, "static"),]
+# STATICFILES_DIRS = [os.path.join(BASE_DIR, "static"), ]
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
