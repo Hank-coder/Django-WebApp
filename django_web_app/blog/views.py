@@ -177,10 +177,21 @@ class GPTAudioCreateView(LoginRequiredMixin, CreateView):
     def post(self, request, *args, **kwargs):
         audio_file = request.FILES.get('audio')
         if audio_file:
-            response_data = gpt_audio_response(audio_file, self.request.user)
+            chat_id = request.POST.get('chat_id')
+            # 获取上下文
+            records = PostAudio.objects.filter(author=self.request.user, chat_id=chat_id).order_by('-date_posted')
+            combined_request = ""
+            if records:
+                # 遍历查询集并从每个对象中获取request_data
+                data_strings = [req_record.request for req_record in records]
+                # 将所有的数据连接成一个字符串
+                combined_request = ' '.join(data_strings)
+            print(combined_request)
+
+            response_data = gpt_audio_response(audio_file, self.request.user, combined_request)
             user_transcript = response_data.get('user_transcript')
             gpt_response = clean_text(response_data.get('gpt_response'))
-            chat_id = request.POST.get('chat_id')
+
             # 创建新的PostAudio对象并保存到数据库
             post_audio = PostAudio(author=self.request.user, request=user_transcript, generate_text=gpt_response,
                                    chat_id=chat_id)
@@ -212,14 +223,23 @@ class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
             if record:
                 # 更新并保存记录
-                # print(edited_text)
+                # 查询上下文
+                records = PostAudio.objects.filter(author=self.request.user, chat_id=chat_id).order_by('-date_posted')
+                combined_request = ""
+                if records:
+                    # 遍历查询集并从每个对象中获取request_data
+                    data_strings = [req_record.request for req_record in records]
+                    # 将所有的数据连接成一个字符串
+                    combined_request = ' '.join(data_strings)
+                print(combined_request)
+
                 record.request = edited_text
-                record.generate_text = clean_text(gpt_text_response(edited_text).get('gpt_response'))
+                record.generate_text = clean_text(gpt_text_response(edited_text, combined_request).get('gpt_response'))
                 record.date_posted = timezone.now()
                 record.save()
                 # print(gpt_text_response(edited_text).get('gpt_response'))
                 # 返回成功信息和更新后的文本
-                return JsonResponse(gpt_text_response(edited_text), status=200)
+                return JsonResponse(gpt_text_response(edited_text, combined_request), status=200)
 
             else:
                 # 如果没有找到匹配的记录
@@ -235,7 +255,6 @@ class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 
 class ImageCreateView(LoginRequiredMixin, CreateView):
-
     template_name = 'blog/image_create.html'
 
     def get(self, request, *args, **kwargs):
@@ -265,5 +284,21 @@ def clean_text(text):
     cleaned_text = text.replace('\n', ' ')
     # 去除制表符
     cleaned_text = cleaned_text.replace('\t', ' ')
-    # 如果还有其他特定字符或字符串需要替换，你可以继续添加更多的.replace()方法
-    return cleaned_text
+
+    # 如果文本长度小于或等于500，直接返回
+    if len(cleaned_text) <= 1500:
+        return cleaned_text
+
+    # 如果文本长度超过500，找到最后一个句号、问号或感叹号
+    cutoff = 1500
+    while cutoff > 0:
+        if cleaned_text[cutoff] in ['.', '!', '?']:
+            break
+        cutoff -= 1
+
+    # 如果在前500个字符中没有找到句子结束的标点符号，返回前500个字符
+    if cutoff == 0:
+        return cleaned_text[:1500]
+
+    # 否则，返回到最后一个句子结束的位置
+    return cleaned_text[:cutoff+1]

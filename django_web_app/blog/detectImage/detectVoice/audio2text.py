@@ -12,12 +12,12 @@ from ..utils import get_apikey
 get_apikey(openai)
 
 
-def gpt_audio_response(audio_file, user):
+def gpt_audio_response(audio_file, user, combined_request):
     audio_path = save_audio_file(audio_file, user)
     audio_file_new = open(audio_path, "rb")
-    generate = generate_corrected_transcript(0.8, audio_file_new)
+    generate = generate_corrected_transcript(0.8, audio_file_new, combined_request)
     return generate
 
 
-def gpt_text_response(text_file):
-    return generate_corrected_text(0.8, text_file)
+def gpt_text_response(text_file, combined_request):
+    return generate_corrected_text(0.8, text_file, combined_request)

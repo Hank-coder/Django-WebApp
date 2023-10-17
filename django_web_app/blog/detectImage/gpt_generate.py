@@ -91,8 +91,13 @@ def get_completion_from_messages(
 
 
 # 调用chatgpt 语音 API
-def generate_corrected_transcript(temperature, audio_file):
-    system_prompt = "Please help me answer the question from client"
+def generate_corrected_transcript(temperature, audio_file, combined_request):
+
+    if combined_request.strip():  # 使用strip()来确保不仅仅是空格
+        system_prompt = "Please help me answer the user's questions, I will give you the user's previous questions " \
+                        + combined_request
+    else:
+        system_prompt = "Please help me answer the user's questions."
 
     # 转录用户的语音输入
     user_transcript = openai.Audio.transcribe("whisper-1", audio_file).text
@@ -123,8 +128,12 @@ def generate_corrected_transcript(temperature, audio_file):
     }
 
 
-def generate_corrected_text(temperature, text_info):
-    system_prompt = "Please help me answer the question from user"
+def generate_corrected_text(temperature, text_info, combined_request):
+    if combined_request.strip():  # 使用strip()来确保不仅仅是空格
+        system_prompt = "Please help me answer the user's questions, I will give you the user's previous questions " \
+                        + combined_request
+    else:
+        system_prompt = "Please help me answer the user's questions."
 
     response = openai.ChatCompletion.create(
         model="gpt-4",
