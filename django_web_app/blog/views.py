@@ -189,7 +189,7 @@ class GPTAudioCreateView(LoginRequiredMixin, CreateView):
             print(combined_request)
 
             response_data = gpt_audio_response(audio_file, self.request.user, combined_request)
-            user_transcript = response_data.get('user_transcript')
+            user_transcript = clean_text(response_data.get('user_transcript'))
             gpt_response = clean_text(response_data.get('gpt_response'))
 
             # 创建新的PostAudio对象并保存到数据库
@@ -233,7 +233,7 @@ class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                     combined_request = ' '.join(data_strings)
                 print(combined_request)
 
-                record.request = edited_text
+                record.request = clean_text(edited_text)
                 record.generate_text = clean_text(gpt_text_response(edited_text, combined_request).get('gpt_response'))
                 record.date_posted = timezone.now()
                 record.save()
