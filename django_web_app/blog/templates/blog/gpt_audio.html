@@ -186,6 +186,9 @@
         let recordingTimeout;
         let startRecordingTime;
         let messageCounter = 0;
+        let old_user_transcript;
+        let old_gpt_response;
+
 
         async function startRecording() {
             try {
@@ -242,6 +245,7 @@
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             audioChunks = [];
 
+
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             const formData = new FormData();
@@ -255,6 +259,7 @@
                     'X-CSRFToken': csrfToken
                 }
             })
+
                 .then(response => response.json())
                 .then(data => {
                     messageCounter++;
@@ -272,6 +277,8 @@
                     gptMessageElem.className = "gpt-message";
                     gptMessageElem.innerText = "GPT: " + (data.gpt_response || "等待响应");
                     dialogueContainer.appendChild(gptMessageElem);
+                    old_user_transcript = data.user_transcript;
+                    old_gpt_response = data.gpt_response;
 
                      //重置开始按钮
                     document.querySelector(".record-button:nth-of-type(1)").style.display = "inline-block";
@@ -319,7 +326,7 @@
                         //messageContentElem.innerText = responseData.answer;
                     } else {
                         // 如果后端没有返回期望的数据结构，恢复原始内容
-                        //messageContentElem.innerText = messageContentElem.dataset.originalText;
+                        messageContentElem.innerText = messageContentElem.dataset.originalText;
                     }
                 } catch (error) {
                     console.error('Error sending data to backend:', error);
@@ -349,12 +356,12 @@
 
         const userMessageElem = document.createElement("div");
         userMessageElem.className = "user-message";
-         userMessageElem.innerHTML = `${messageCounter}. &nbsp;<span class="message-content">${user_transcript || "输入"}</span>`;
+         userMessageElem.innerHTML = `${messageCounter}. &nbsp;<span class="message-content">${user_transcript || old_user_transcript}</span>`;
         dialogueContainer.appendChild(userMessageElem);
 
         const gptMessageElem = document.createElement("div");
         gptMessageElem.className = "gpt-message";
-        gptMessageElem.innerText = "GPT: " + (gpt_response || "等待响应");
+        gptMessageElem.innerText = "GPT: " + (gpt_response || old_gpt_response);
         dialogueContainer.appendChild(gptMessageElem);
     }
 
