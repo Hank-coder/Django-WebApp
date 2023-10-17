@@ -245,21 +245,26 @@
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             audioChunks = [];
 
-
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.webm');
             formData.append('chat_id', chatId);
 
-            fetch('/post/gptnew/', {
+            const fetchPromise = fetch('/post/gptnew/', {
                 method: 'POST',
                 body: formData,
                 headers: {
                     'X-CSRFToken': csrfToken
                 }
-            })
+            });
 
+                const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request took longer than 5 minutes!')), 300000)
+            );
+
+
+            Promise.race([fetchPromise, timeoutPromise])
                 .then(response => response.json())
                 .then(data => {
                     messageCounter++;
@@ -280,11 +285,15 @@
                     old_user_transcript = data.user_transcript;
                     old_gpt_response = data.gpt_response;
 
-                     //重置开始按钮
+                    //重置开始按钮
                     document.querySelector(".record-button:nth-of-type(1)").style.display = "inline-block";
                 })
                 .catch(error => {
                     console.error('Error:', error);
+                    if (error.message === 'Request took longer than 5 min!') {
+                        alert('Request took too long! Refreshing the page...');
+                        location.reload();
+                    }
                 });
         }
         // 编辑按钮监听
@@ -329,8 +338,8 @@
                         messageContentElem.innerText = messageContentElem.dataset.originalText;
                     }
                 } catch (error) {
-                    console.error('Error sending data to backend:', error);
-                    messageContentElem.innerText = messageContentElem.dataset.originalText;
+                       alert('Request took too long! Refreshing the page...');
+                       location.reload();
                 }
             }
             else if (messageElem) {

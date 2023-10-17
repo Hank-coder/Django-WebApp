@@ -89,7 +89,7 @@ def get_completion_from_messages(
 
 # 调用chatgpt 语音 API
 def generate_corrected_transcript(temperature, audio_file):
-    system_prompt = "Please help me answer the question from client, default language use Simplified Chinese"
+    system_prompt = "Please help me answer the question from client"
 
     # 转录用户的语音输入
     user_transcript = openai.Audio.transcribe("whisper-1", audio_file).text
