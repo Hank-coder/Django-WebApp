@@ -161,6 +161,7 @@
         <button class="record-button" onclick="startRecording()" >开始对话</button>
         <button class="record-button" onclick="stopRecording()" style="display:none;">停止对话</button>
         <div class="loading-circle"></div> <!-- 正在处理的小圆圈提示 -->
+        <span class="loading-text" style="display: none;">加载中</span>
     </div>
      <!-- 添加悬浮"Save"按钮 -->
     <button class="floating-save-button" onclick="submitEditedMessage()">Save</button>
@@ -234,6 +235,8 @@
                 document.querySelector(".record-button:nth-of-type(1)").style.display = "none";
                 document.querySelector(".record-button:nth-of-type(2)").style.display = "none";  // 顺序注意 要在当前页面有
                 document.querySelector(".loading-circle").style.display = "block"; // 显示加载圈
+                document.querySelector(".loading-text").style.display = "inline"; // 显示加载文本
+
 
                 mediaRecorder.stop(); //检测器检测 停止传信息给handleAudioData()
                 clearTimeout(recordingTimeout);
@@ -272,6 +275,8 @@
                     const userMessageElem = document.createElement("div");
 
                     document.querySelector(".loading-circle").style.display = "none"; // 隐藏加载圈
+                    document.querySelector(".loading-text").style.display = "none"; // 隐藏加载文本
+
                     document.querySelector(".dialogue-container").style.display = "block"; // 显示对话框
 
                     userMessageElem.className = "user-message";
@@ -308,6 +313,8 @@
                 document.querySelector(".record-button:nth-of-type(1)").style.display = "none";
                 document.querySelector(".record-button:nth-of-type(2)").style.display = "none";
                 document.querySelector(".loading-circle").style.display = "block"; // 显示加载圈
+                document.querySelector(".loading-text").style.display = "inline"; // 显示加载文本
+
                 const messageContentElem = saveButton.parentElement;
                 const editedText = existingInputElem.value;
 
@@ -332,6 +339,8 @@
                         updateDialogues(responseData.user_transcript, responseData.gpt_response);
                         document.querySelector(".record-button:nth-of-type(1)").style.display = "inline-block";
                         document.querySelector(".loading-circle").style.display = "none";
+                        document.querySelector(".loading-text").style.display = "none"; // 隐藏加载文本
+
                         //messageContentElem.innerText = responseData.answer;
                     } else {
                         // 如果后端没有返回期望的数据结构，恢复原始内容

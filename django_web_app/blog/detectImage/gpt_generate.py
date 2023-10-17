@@ -124,7 +124,7 @@ def generate_corrected_text(temperature, text_info):
     system_prompt = "Please help me answer the question from user"
 
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         temperature=temperature,
         messages=[
             {
