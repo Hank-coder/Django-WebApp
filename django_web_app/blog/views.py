@@ -19,7 +19,8 @@ from django.views.generic import (
 )
 
 from .detectImage.detectVoice.audio2text import gpt_audio_response, gpt_text_response
-from .detectImage.generate_text import generate_text
+from .detectImage.gpt_generate import generate_image
+from .detectImage.image2text import generate_text
 from .models import Post, Category, PostAudio
 import operator
 from django.urls import reverse_lazy
@@ -231,6 +232,32 @@ class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def test_func(self):
         return True
+
+
+class ImageCreateView(LoginRequiredMixin, CreateView):
+
+    template_name = 'blog/image_create.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+
+    def post(self, request, *args, **kwargs):
+        prompt = request.POST.get('prompt')
+
+        if not prompt:
+            messages.error(request, "Prompt cannot be empty.")
+            return render(request, self.template_name)
+
+        # 使用generate_image函数生成图像并获取保存路径
+        image_path = generate_image(prompt, request.user.username)
+
+        # 为简单起见，只是将图像的路径返回给用户。
+        context = {
+            'image_url': image_path  # 这里假设image_path是一个可以直接访问的URL
+        }
+        return render(request, self.template_name, context)
+        # render是Django的一个核心函数，用于将数据渲染到模板并返回一个HTTP响应。它是Django
+        # 模板系统的一个关键部分，允许您将Python字典中的数据传递到HTML模板，并在模板中显示这些数据。
 
 
 def clean_text(text):
