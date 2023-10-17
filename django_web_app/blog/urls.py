@@ -6,7 +6,7 @@ from .views import (
     PostUpdateView,
     PostDeleteView,
     UserPostListView,
-    GPTAudioCreateView, GPTAudioUpdateView,
+    GPTAudioCreateView, GPTAudioUpdateView, ImageCreateView,
 )
 from . import views
 
@@ -16,6 +16,8 @@ urlpatterns = [
     path('post/<int:pk>/', PostDetailView.as_view(), name='post-detail'),
     path('post/gptnew/', GPTAudioCreateView.as_view(), name='gpt-audio'),
     path('update/gptnew/', GPTAudioUpdateView.as_view(), name='gpt-audio-update'),
+
+    path('image/new/', ImageCreateView.as_view(), name='image-generate'),
     path('post/new/', PostCreateView.as_view(), name='post-create'),
     path('post/<int:pk>/update/', PostUpdateView.as_view(), name='post-update'),
     path('post/<int:pk>/delete/', PostDeleteView.as_view(), name='post-delete'),

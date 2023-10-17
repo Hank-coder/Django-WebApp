@@ -63,3 +63,4 @@ class PostAudio(models.Model):
     # 你在 Post 模型中定义的 get_absolute_url 方法告诉 Django 创建或更新成功后应该重定向到哪里。
     # def get_absolute_url(self):
     #     return reverse('post-detail', kwargs={'pk': self.pk})
+

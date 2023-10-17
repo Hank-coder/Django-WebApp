@@ -118,7 +118,7 @@ tk_instance = None
 #
 #     def on_select_next_image():
 #         ui_window.destroy()  # Close the current window
-#         subprocess.run(["python", "generate_text.py"])  # Re-run generate_text.py
+#         subprocess.run(["python", "image2text.py"])  # Re-run image2text.py
 #
 #     # Create a new window
 #     ui_window = tk.Tk()

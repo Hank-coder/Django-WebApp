@@ -23,7 +23,7 @@ def generate_text(file_path, other_data):
         # model = YOLO('path/to/best.pt')  # load a custom model
 
         # Predict with the model
-        results = model.predict(source=file_path, project="image_detect", save_txt=True)  # predict
+        model.predict(source=file_path, project="image_detect", save_txt=True)  # predict
         # on an image
 
         # 创建一个空字典来保存结果

@@ -2,6 +2,10 @@ import openai
 from django.http import JsonResponse
 
 from .utils import get_apikey
+import requests
+import os
+from django.conf import settings
+from django.conf import settings
 
 # Set the API base URL and key (ensure these values are stored securely)
 
@@ -147,3 +151,29 @@ def generate_corrected_text(temperature, text_info):
         'user_transcript': text_info,
         'gpt_response': gpt_response
     }
+
+
+def generate_image(prompt, username, size='1024x1024'):
+    # 使用OpenAI API生成图像
+    response = openai.Image.create(
+        prompt=prompt,
+        n=1,
+        size=size
+    )
+    image_url = response['data'][0]['url']
+
+    # 从URL下载图像
+    image_response = requests.get(image_url, stream=True)
+    image_response.raise_for_status()
+
+    # 确定保存图像的路径
+    save_path = os.path.join(settings.BASE_DIR, 'media', 'image_generate',
+                             f"{username}.png")
+    return_url = os.path.join('/media', 'image_generate',
+                              f"{username}.png")
+    # 保存图像到指定路径
+    with open(save_path, 'wb') as file:
+        for chunk in image_response.iter_content(chunk_size=8192):
+            file.write(chunk)
+
+    return return_url
