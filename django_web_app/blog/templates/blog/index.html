@@ -57,6 +57,24 @@
             #message-input::-webkit-scrollbar-thumb:hover {
                 background: #8b3dff; 
             }
+             /* 新增的CSS样式 */
+            #back-to-home {
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                padding: 10px 20px;
+                background-color: #3b5998; /* 或者你喜欢的任何颜色 */
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+                transition: background-color 0.3s;
+            }
+
+            #back-to-home:hover {
+                background-color: #2d4373; /* 或者你喜欢的任何颜色 */
+            }
         </style>
         <script src="{% static 'index/js/highlight.min.js' %}" ></script>
         <script src="{% static 'index/js/highlightjs-copy.min.js' %}" ></script>
@@ -157,5 +175,9 @@
         <div class="mobile-sidebar">
             <i class="fa-solid fa-bars"></i>
         </div>
+    <!-- 新增的按钮 -->
+    <button id="back-to-home" onclick="window.location.href = `{% url 'blog-home' %}`;">
+        返回主页
+    </button>
     </body>
 </html>
