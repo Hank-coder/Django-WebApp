@@ -283,7 +283,7 @@ const delete_conversation = async (conversation_id) => {
 };
 
 const set_conversation = async (conversation_id) => {
-  history.pushState({}, null, `/chat/${conversation_id}`);
+  // history.pushState({}, null, `/chat/${conversation_id}`);
   window.conversation_id = conversation_id;
 
   await clear_conversation();
@@ -292,7 +292,7 @@ const set_conversation = async (conversation_id) => {
 };
 
 const new_conversation = async () => {
-  history.pushState({}, null, `/chat/`);
+  // history.pushState({}, null, `/chat/`);
   window.conversation_id = uuid();
 
   await clear_conversation();

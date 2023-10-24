@@ -1,6 +1,7 @@
 import json
 
 import openai
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
@@ -259,8 +260,8 @@ class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         return True
 
-
-class GPTChatCreateView(LoginRequiredMixin, CreateView):
+# 不登陆也能访问
+class GPTChatCreateView(CreateView):
     model = PostAudio
     template_name = 'blog/index.html'
     fields = ['request', 'generate_text', 'chat_id']

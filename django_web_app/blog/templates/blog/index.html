@@ -60,9 +60,9 @@
              /* 新增的CSS样式 */
             #back-to-home {
                 position: fixed;
-                bottom: 20px;
-                left: 20px;
-                padding: 10px 20px;
+                bottom: 10px;
+                left: 10px;
+                padding: 5px 10px;
                 background-color: #3b5998; /* 或者你喜欢的任何颜色 */
                 color: white;
                 border: none;
@@ -88,21 +88,22 @@
                 <div class="top">
                     <button class="new_convo" onclick="new_conversation()">
                         <i class="fa-regular fa-plus"></i>
-                        <span>New Conversation</span>
+                        <span>新会话</span>
                     </button>
                     <div class="spinner"></div>
                 </div>
                 <div class="bottom_buttons">
                     <button onclick="delete_conversations()">
                         <i class="fa-regular fa-trash"></i>
-                        <span>Clear Conversations</span>
+                        <span>清空会话</span>
                     </button>
                     <div class="info">
-                        <i class="fa-regular fa-circle-info"></i>
-                        <span class="convo-title"><br>
-                            Version: 0.0.1-beta<br>
-                            Release: 2023<br>
-                        </span>
+                        <i class="fa-regular fa-circle-info">测试版
+                            数据将储存在本地 请及时保存</i>
+{#                        <span class="convo-title"><br>#}
+{#                            Version: 0.0.1-beta<br>#}
+{#                            Release: 2023<br>#}
+{#                        </span>#}
                     </div>
                 </div>
             </div>
@@ -127,14 +128,12 @@
                     <div class="field">
                         <input type="checkbox" id="switch" checked/>
                         <label for="switch"></label>
-                        <span class="about">Web Access</span>
+                        <span class="about">接入互联网</span>
                     </div>
                     <div class="field">
                         <select name="model" id="model">
                             <option value="gpt-3.5-turbo" selected>gpt-3.5-turbo</option>
                             <option value="gpt-4">gpt-4</option>
-                            <option value="gpt-3.5-turbo-0301">gpt-3.5-turbo-0301</option>
-                            <option value="gpt-4-0314">gpt-4-0314</option>
                         </select>
                         <!-- <span class="about">Model</span> -->
                     </div>
@@ -180,4 +179,5 @@
         返回主页
     </button>
     </body>
+
 </html>
