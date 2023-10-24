@@ -49,6 +49,7 @@
 {#                </form>#}
               
                     {% if user.is_authenticated %}
+                    <a href="{% url 'gpt-chat' %} " class="btn text-white m-2"><i class="fas fa-user-edit"></i> GPT基础版</a>
                     <a href="{% url 'gpt-audio' %} " class="btn text-white m-2"><i class="fas fa-user-edit"></i> GPT语音对话</a>
                     <a href="{% url 'image-generate' %} " class="btn text-white m-2"><i class="fas fa-user-edit"></i> AI图片生成</a>
                     <a href="{% url 'post-create' %} " class="btn text-white m-2"><i class="fas fa-user-edit"></i> 朋友圈文案生成</a>

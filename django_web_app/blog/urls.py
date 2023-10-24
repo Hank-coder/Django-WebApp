@@ -6,12 +6,15 @@ from .views import (
     PostUpdateView,
     PostDeleteView,
     UserPostListView,
-    GPTAudioCreateView, GPTAudioUpdateView, ImageCreateView,
+    GPTAudioCreateView, GPTAudioUpdateView, ImageCreateView, GPTChatCreateView,
 )
 from . import views
 
 urlpatterns = [
     path('', PostListView.as_view(), name='blog-home'),  # 首页
+
+    path('post/gptchat/', GPTChatCreateView.as_view(), name='gpt-chat'),  # gpt聊天界面
+
     path('user/<str:username>', UserPostListView.as_view(), name='user-posts'),
     path('post/<int:pk>/', PostDetailView.as_view(), name='post-detail'),
     path('post/gptnew/', GPTAudioCreateView.as_view(), name='gpt-audio'),

@@ -1,8 +1,9 @@
 import json
 
+import openai
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 import os
@@ -10,6 +11,9 @@ from django.conf import settings
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from json import loads, dumps
+from datetime import datetime
+from requests import get, post
 from django.views.generic import (
     ListView,
     DetailView,
@@ -18,9 +22,11 @@ from django.views.generic import (
     DeleteView
 )
 
+from .chatPages.server.config import special_instructions
 from .detectImage.detectVoice.audio2text import gpt_audio_response, gpt_text_response
 from .detectImage.gpt_generate import generate_image
 from .detectImage.image2text import generate_text
+from .detectImage.utils import get_apikey, fetch_search_results
 from .models import Post, Category, PostAudio
 import operator
 from django.urls import reverse_lazy
@@ -254,6 +260,95 @@ class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return True
 
 
+class GPTChatCreateView(LoginRequiredMixin, CreateView):
+    model = PostAudio
+    template_name = 'blog/index.html'
+    fields = ['request', 'generate_text', 'chat_id']
+    openai_key = get_apikey(openai)
+    openai_api_base = 'https://api.openai.com'
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            body_unicode = request.body.decode('utf-8')
+            body_data = loads(body_unicode)
+
+            jailbreak = body_data['jailbreak']
+            internet_access = body_data['meta']['content']['internet_access']
+            _conversation = body_data['meta']['content']['conversation']
+            prompt = body_data['meta']['content']['parts'][0]
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            system_message = f'You are ChatGPT also known as ChatGPT, a large language model trained by OpenAI. ' \
+                             f'Strictly follow the users instructions.' \
+                             f' Knowledge cutoff: 2021-09-01 Current date: {current_date}'
+
+            extra = []
+            query_content = prompt["content"]  # 假设 prompt 已经定义
+            internet_access = True  # 或根据需要设置
+            result_count = 3
+            extra = fetch_search_results(query_content, internet_access, result_count)
+
+            conversation = [{'role': 'system', 'content': system_message}] + \
+                           extra + special_instructions[jailbreak] + \
+                           _conversation + [prompt]
+            # print(conversation)
+            url = f"{self.openai_api_base}/v1/chat/completions"
+
+            # 给openai发送请求
+            gpt_resp = post(
+                url=url,
+                headers={
+                    'Authorization': f'Bearer {self.openai_key}'
+                },
+                json={
+                    'model': body_data['model'],
+                    'messages': conversation,
+                    'stream': True
+                },
+                stream=True
+            )
+
+            if gpt_resp.status_code >= 400:
+                error_data = gpt_resp.json().get('error', {})
+                error_code = error_data.get('code', None)
+                error_message = error_data.get('message', "An error occurred")
+                return JsonResponse({
+                    'success': False,
+                    'error_code': error_code,
+                    'message': error_message,
+                    'status_code': gpt_resp.status_code
+                }, status=gpt_resp.status_code)
+
+            def stream():  # 流传输
+                for chunk in gpt_resp.iter_lines():
+                    try:
+                        decoded_line = loads(chunk.decode("utf-8").split("data: ")[1])
+                        token = decoded_line["choices"][0]['delta'].get('content')
+
+                        if token is not None:
+                            yield token
+
+                    except GeneratorExit:
+                        break
+
+                    except Exception as e:
+                        # print(e)
+                        continue
+
+            return StreamingHttpResponse(stream(), content_type='text/event-stream')
+
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                '_action': '_ask',
+                'success': False,
+                'error': f'an error occurred {str(e)}'
+            }, status=400)
+
+
 class ImageCreateView(LoginRequiredMixin, CreateView):
     template_name = 'blog/image_create.html'
 
@@ -301,4 +396,4 @@ def clean_text(text):
         return cleaned_text[:1500]
 
     # 否则，返回到最后一个句子结束的位置
-    return cleaned_text[:cutoff+1]
+    return cleaned_text[:cutoff + 1]

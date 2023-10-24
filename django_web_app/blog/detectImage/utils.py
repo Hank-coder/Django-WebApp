@@ -1,5 +1,7 @@
 import subprocess
+from datetime import datetime
 
+import requests
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 from tkinter import filedialog
@@ -187,4 +189,34 @@ def get_apikey(openai):
         openai.api_key = api_key
     else:
         print("API key not set!")
+    return str(api_key)
 
+
+def fetch_search_results(query, internet_access=True, result_count=3):
+    api_key = os.environ.get('BING_API_KEY')
+    if internet_access:
+        headers = {
+            'Ocp-Apim-Subscription-Key': api_key,
+        }
+        params = {
+            'q': query,
+            'count': result_count,
+            'offset': 0,
+            'mkt': 'en-US',
+            'safesearch': 'Moderate',
+        }
+        search_url = "https://api.bing.microsoft.com/v7.0/search"
+        search_response = requests.get(search_url, headers=headers, params=params)
+        search_results = search_response.json().get('webPages', {}).get('value', [])
+        blob = ''
+        for index, result in enumerate(search_results):
+            # 修改了下面的行来正确地访问结果字典中的值
+            blob += f'[{index}] "{result["snippet"]}"\nURL:{result["url"]}\n\n'
+
+        date = datetime.now().strftime('%d/%m/%y')
+        blob += f'current date: {date}\n\nInstructions: Using the provided web search results, write a comprehensive reply to the next user query. Make sure to cite results using [[number](URL)] notation after the reference. If the provided search results refer to multiple subjects with the same name, write separate answers for each subject. Ignore your previous response if any.'
+
+        extra = [{'role': 'user', 'content': blob}]
+        return extra
+    else:
+        return None
