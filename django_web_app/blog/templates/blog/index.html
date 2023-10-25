@@ -75,6 +75,13 @@
             #back-to-home:hover {
                 background-color: #2d4373; /* 或者你喜欢的任何颜色 */
             }
+            .image-upload-icon {
+                cursor: pointer;
+                font-size: 24px;
+                color: #3b5998;
+                margin-right: 10px;
+                vertical-align: middle;
+            }
         </style>
         <script src="{% static 'index/js/highlight.min.js' %}" ></script>
         <script src="{% static 'index/js/highlightjs-copy.min.js' %}" ></script>
@@ -118,6 +125,12 @@
                 </div>
                 <div class="user-input">
                     <div class="box input-box">
+                        <!-- 新增的图片上传按钮 -->
+
+                        <img src="{% static 'index/img/upload.png' %}" alt="Upload" width="24"> <!-- 使用真实的图片 -->
+
+                        <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="previewImage(this)" />
+
                         <textarea id="message-input" placeholder="Ask a question" cols="30" rows="10" style="white-space: pre-wrap;" oninput="resizeTextarea(this)"></textarea>
                         <div id="send-button">
                             <i class="fa-regular fa-paper-plane-top"></i>

@@ -24,7 +24,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.203.214', '127.0.0.1', 'dedi2.1808.cf']
+ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.203.214', '127.0.0.1', 'dedi2.1808.cf','*.wuxianliulianng.xyz']
 
 # 服务器端Https启用
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
