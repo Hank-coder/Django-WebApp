@@ -408,7 +408,8 @@ class GPTImageView(CreateView):
                     destination.write(chunk)
 
             try:
-                extracted_text = pytesseract.image_to_string(save_path, timeout=30)  # Timeout after 30 seconds
+                extracted_text = pytesseract.image_to_string(save_path, lang='chi_sim+eng', timeout=30)
+
                 # 删除已经读取的图像文件
                 os.remove(save_path)
             except RuntimeError as timeout_error:

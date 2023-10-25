@@ -438,7 +438,10 @@ select {
 
     appearance: none;
 }
-
+.disabled-upload {
+    pointer-events: none;
+    opacity: 0.5;
+}
 .input-box {
     display: flex;
     align-items: center;

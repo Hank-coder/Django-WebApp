@@ -102,6 +102,35 @@
                 max-width: 100%;
                 height: auto;
             }
+
+            .crop-buttons-container {
+                position: relative;
+                height: 50px; /* 可以根据需要调整 */
+            }
+
+            .crop-buttons-container button {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                background-color: #fff; /* 你可以选择你喜欢的背景颜色 */
+                border: none;
+                padding: 10px 20px; /* 按钮的内部间距，可以根据需要调整 */
+                margin: 0 10px; /* 按钮之间的距离 */
+                border-radius: 5px; /* 给按钮一个圆角 */
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 为按钮添加一个小的阴影 */
+                cursor: pointer; /* 当鼠标悬停在按钮上时，显示指针样式 */
+            }
+
+            #confirm-crop {
+                left: 50%;
+            }
+
+            #cancel-crop {
+                left: 50%;
+                margin-left: 90px; /* 根据第一个按钮的宽度和间距调整 */
+            }
+
+
         </style>
 
         <script src="{% static 'index/js/highlight.min.js' %}" ></script>
@@ -146,10 +175,10 @@
                 <div class="box" id="messages">
                     <!-- 裁剪容器 -->
                     <div id="image-cropper-container" style="display: none;">
-                        <div id="cropper-actions">
-                            <button id="confirm-crop">确定</button>
-                            <button id="cancel-crop">取消</button>
-                        </div>
+                        <div class="crop-buttons-container">
+                        <button id="confirm-crop">确定</button>
+                        <button id="cancel-crop">取消</button>
+                    </div>
                         <img id="image-preview" src="" alt="Preview">
                     </div>
                 </div>
