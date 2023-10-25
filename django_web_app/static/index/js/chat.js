@@ -126,7 +126,6 @@ function cropAndSendImage() {
             })
             .catch(error => {
                 console.error('Upload failed:', error);
-                // TODO: 提示用户上传失败
             });
         }, 'image/png');
     }
