@@ -20,7 +20,10 @@
         <script src="{% static 'index/js/icons.js' %}" ></script>
         <script src="{% static 'index/js/chat.js' %}" defer></script>
         <script src="https://cdn.jsdelivr.net/npm/markdown-it@latest/dist/markdown-it.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
         <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/styles/base16/dracula.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.css">
+
         <script>
             const user_image        = `<img src="{% static 'index/img/user.png' %}" alt="User Avatar">`;
             const gpt_image         = `<img src="{% static 'index/img/gpt.png' %}" alt="GPT Avatar">`;
@@ -82,7 +85,24 @@
                 margin-right: 10px;
                 vertical-align: middle;
             }
+
+            .upload-icon {
+                background-color: rgba(255, 255, 255, 0.5);  /* 这是半透明的白色背景 */
+                border-radius: 4px;  /* 根据需要可以添加圆角 */
+                padding: 4px;  /* 根据需要可以添加内边距 */
+            }
+
+            #image-cropper-container {
+                max-width: 100%;
+                height: auto;
+                margin: 20px 0;
+            }
+            #image-preview {
+                max-width: 100%;
+                height: auto;
+            }
         </style>
+
         <script src="{% static 'index/js/highlight.min.js' %}" ></script>
         <script src="{% static 'index/js/highlightjs-copy.min.js' %}" ></script>
         <script>window.conversation_id = `{{chat_id}}`</script>
@@ -90,6 +110,14 @@
     </head>
     <body>
         <div class="gradient"></div>
+           <!-- 裁剪容器 -->
+        <div id="image-cropper-container" style="display: none;">
+            <img id="image-preview" src="" alt="Preview">
+            <div id="cropper-actions">
+                <button id="confirm-crop">确定</button>
+                <button id="cancel-crop">取消</button>
+            </div>
+        </div>
         <div class="row">
             <div class="box conversations">
                 <div class="top">
@@ -126,9 +154,7 @@
                 <div class="user-input">
                     <div class="box input-box">
                         <!-- 新增的图片上传按钮 -->
-
-                        <img src="{% static 'index/img/upload.png' %}" alt="Upload" width="24"> <!-- 使用真实的图片 -->
-
+                        <img src="{% static 'index/img/upload.png' %}" alt="Upload" width="24" class="upload-icon" onclick="triggerFileInput();">
                         <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="previewImage(this)" />
 
                         <textarea id="message-input" placeholder="Ask a question" cols="30" rows="10" style="white-space: pre-wrap;" oninput="resizeTextarea(this)"></textarea>
