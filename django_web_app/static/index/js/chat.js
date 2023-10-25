@@ -382,6 +382,19 @@ const clear_conversation = async () => {
   while (messages.length > 0) {
     message_box.removeChild(messages[0]);
   }
+   let cropperContainer = document.getElementById("image-cropper-container");
+    // 如果不存在，则添加到 message_box
+    if (!cropperContainer) {
+        message_box.innerHTML += `
+            <div id="image-cropper-container" style="display: none;">
+                <div class="crop-buttons-container">
+                    <button id="confirm-crop">确定</button>
+                    <button id="cancel-crop">取消</button>
+                </div>
+                <img id="image-preview" src="" alt="Preview">
+            </div>
+        `;
+    }
 };
 
 const show_option = async (conversation_id) => {
@@ -441,13 +454,20 @@ const load_conversation = async (conversation_id) => {
   );
   console.log(conversation, conversation_id);
   // 添加文件加载部分
-  message_box.innerHTML += `<div id="image-cropper-container" style="display: none;">
-                        <div class="crop-buttons-container">
-                        <button id="confirm-crop">确定</button>
-                        <button id="cancel-crop">取消</button>
-                        </div>
-                        <img id="image-preview" src="" alt="Preview">
-                    </div>`
+  // 检查是否存在 image-cropper-container
+    let cropperContainer = document.getElementById("image-cropper-container");
+    // 如果不存在，则添加到 message_box
+    if (!cropperContainer) {
+        message_box.innerHTML += `
+            <div id="image-cropper-container" style="display: none;">
+                <div class="crop-buttons-container">
+                    <button id="confirm-crop">确定</button>
+                    <button id="cancel-crop">取消</button>
+                </div>
+                <img id="image-preview" src="" alt="Preview">
+            </div>
+        `;
+    }
 
   for (item of conversation.items) {
     message_box.innerHTML += `
