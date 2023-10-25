@@ -192,6 +192,8 @@ const remove_cancel_button = async () => {
 
 const ask_gpt = async (message) => {
   try {
+    document.querySelector('.upload-icon').classList.add('disabled-upload');
+
     message_input.value = ``;
     message_input.innerHTML = ``;
     message_input.innerText = ``;
@@ -328,6 +330,7 @@ const ask_gpt = async (message) => {
 
     await load_conversations(20, 0);
     window.scrollTo(0, 0);
+    document.querySelector('.upload-icon').classList.remove('disabled-upload'); // 启用按钮
   } catch (e) {
     add_message(window.conversation_id, "user", message);
 
@@ -348,11 +351,12 @@ const ask_gpt = async (message) => {
       document.getElementById(`gpt_${window.token}`).innerHTML = error_message;
       add_message(window.conversation_id, "assistant", error_message);
     } else {
-      document.getElementById(`gpt_${window.token}`).innerHTML += ` [aborted]`;
-      add_message(window.conversation_id, "assistant", text + ` [aborted]`);
+      document.getElementById(`gpt_${window.token}`).innerHTML += ` [终止对话 aborted]`;
+      add_message(window.conversation_id, "assistant", text + ` [终止对话  aborted]`);
     }
 
     window.scrollTo(0, 0);
+    document.querySelector('.upload-icon').classList.remove('disabled-upload'); // 启用按钮
   }
 };
 
@@ -515,6 +519,7 @@ const add_message = async (conversation_id, role, content) => {
   ); // update conversation
 };
 
+// 流传输
 const load_conversations = async (limit, offset, loader) => {
   reinit();
   // 添加文件加载部分
