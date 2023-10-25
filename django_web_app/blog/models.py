@@ -1,11 +1,11 @@
 from django.db import models
+from django import forms
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse
 import os
 
 from django.utils.crypto import get_random_string
-
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -63,4 +63,11 @@ class PostAudio(models.Model):
     # 你在 Post 模型中定义的 get_absolute_url 方法告诉 Django 创建或更新成功后应该重定向到哪里。
     # def get_absolute_url(self):
     #     return reverse('post-detail', kwargs={'pk': self.pk})
+
+
+# Chat图片数据库
+# class UploadedImage(models.Model):
+#     image = models.ImageField(upload_to='uploaded_images/')
+
+
 

@@ -1,4 +1,3 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -11,6 +10,8 @@
         <meta property="og:image" content="https://openai.com/content/images/2022/11/ChatGPT.jpg">
         <meta property="og:description" content="A conversational AI system that listens, learns, and challenges">
         <meta property="og:url" content="https://chat.acy.dev">
+         <meta name="csrf-token" content="{{ csrf_token }}">
+
         <link rel="stylesheet" href="{% static 'index/css/style.css' %}">
 
         <link rel="apple-touch-icon" sizes="180x180"     href="{% static 'index/img/apple-touch-icon.png' %}">
@@ -110,14 +111,7 @@
     </head>
     <body>
         <div class="gradient"></div>
-           <!-- 裁剪容器 -->
-        <div id="image-cropper-container" style="display: none;">
-            <img id="image-preview" src="" alt="Preview">
-            <div id="cropper-actions">
-                <button id="confirm-crop">确定</button>
-                <button id="cancel-crop">取消</button>
-            </div>
-        </div>
+
         <div class="row">
             <div class="box conversations">
                 <div class="top">
@@ -150,6 +144,14 @@
                     </button>
                 </div>
                 <div class="box" id="messages">
+                    <!-- 裁剪容器 -->
+                    <div id="image-cropper-container" style="display: none;">
+                        <div id="cropper-actions">
+                            <button id="confirm-crop">确定</button>
+                            <button id="cancel-crop">取消</button>
+                        </div>
+                        <img id="image-preview" src="" alt="Preview">
+                    </div>
                 </div>
                 <div class="user-input">
                     <div class="box input-box">

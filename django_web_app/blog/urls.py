@@ -6,7 +6,7 @@ from .views import (
     PostUpdateView,
     PostDeleteView,
     UserPostListView,
-    GPTAudioCreateView, GPTAudioUpdateView, ImageCreateView, GPTChatCreateView,
+    GPTAudioCreateView, GPTAudioUpdateView, ImageCreateView, GPTChatCreateView, GPTImageView,
 )
 from . import views
 
@@ -14,6 +14,7 @@ urlpatterns = [
     path('', PostListView.as_view(), name='blog-home'),  # 首页
 
     path('post/gptchat/', GPTChatCreateView.as_view(), name='gpt-chat'),  # gpt聊天界面
+    path('post/gptchat/image', GPTImageView.as_view(), name='gpt-image'),
 
     path('user/<str:username>', UserPostListView.as_view(), name='user-posts'),
     path('post/<int:pk>/', PostDetailView.as_view(), name='post-detail'),

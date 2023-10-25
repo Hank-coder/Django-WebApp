@@ -14,6 +14,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from json import loads, dumps
 from datetime import datetime
+
+from pytesseract import pytesseract
 from requests import get, post
 from django.views.generic import (
     ListView,
@@ -260,6 +262,7 @@ class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         return True
 
+
 # 不登陆也能访问
 class GPTChatCreateView(CreateView):
     model = PostAudio
@@ -373,6 +376,53 @@ class ImageCreateView(LoginRequiredMixin, CreateView):
         return render(request, self.template_name, context)
         # render是Django的一个核心函数，用于将数据渲染到模板并返回一个HTTP响应。它是Django
         # 模板系统的一个关键部分，允许您将Python字典中的数据传递到HTML模板，并在模板中显示这些数据。
+
+
+# 入数据库
+# class ImageUploadForm(forms.ModelForm):
+#     class Meta:
+#         model = UploadedImage
+#         fields = ['image']
+
+
+class GPTImageView(CreateView):
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+
+    def post(self, request, *args, **kwargs):
+        uploaded_image = request.FILES.get('croppedImage')
+        if uploaded_image:
+            # 创建一个文件名
+            filename = '{}.png'.format(datetime.now().strftime('%Y%m%d%H%M%S%f'))
+
+            # 定义保存路径
+            save_path = os.path.join(settings.MEDIA_ROOT, 'uploaded_chat_images', filename)
+
+            # 确保目录存在
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+            # 保存文件
+            with open(save_path, 'wb+') as destination:
+                for chunk in uploaded_image.chunks():
+                    destination.write(chunk)
+
+            try:
+                extracted_text = pytesseract.image_to_string(save_path, timeout=30)  # Timeout after 30 seconds
+                # 删除已经读取的图像文件
+                os.remove(save_path)
+            except RuntimeError as timeout_error:
+                # Tesseract processing is terminated
+                return JsonResponse({'status': 'error', 'message': 'Image processing failed!'}, status=400)
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Image saved successfully!',
+                'extracted_text': extracted_text
+            })
+
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Image upload failed!'}, status=400)
 
 
 def clean_text(text):

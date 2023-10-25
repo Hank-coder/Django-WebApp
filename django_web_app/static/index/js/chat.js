@@ -37,9 +37,38 @@ function previewImage(input) {
 
             // 初始化Cropper.js
             cropper = new Cropper(imagePreview, {
-                aspectRatio: 16 / 9,  // 你可以调整这个值来改变裁剪框的宽高比
-                viewMode: 1,
-            });
+            viewMode: 1,
+            ready: function() {
+               // 获取图片的原始尺寸
+                const imageData = this.cropper.getImageData();
+                const originalWidth = imageData.naturalWidth;
+                const originalHeight = imageData.naturalHeight;
+
+                // 计算裁剪框的初始尺寸（原图片尺寸的一半）
+                const cropWidth = originalWidth * 0.5;
+                const cropHeight = originalHeight * 0.5;
+
+                // 计算裁剪框的初始位置（居中）
+                const offsetX = (originalWidth - cropWidth) / 2;
+                const offsetY = (originalHeight - cropHeight) / 2;
+
+                // 设置裁剪框的尺寸和位置
+                this.cropper.setData({
+                    x: offsetX,
+                    y: offsetY,
+                    width: cropWidth,
+                    height: cropHeight
+                });
+                this.cropper.setDragMode('move');
+            },
+            zoom: function(event) {
+                // 防止放大超出原始尺寸
+                if (event.detail.ratio > 1) {
+                    event.preventDefault();
+                    this.cropper.zoomTo(1);
+                }
+            }
+        });
 
             document.getElementById('image-cropper-container').style.display = 'block';
         }
@@ -49,15 +78,57 @@ function previewImage(input) {
 }
 
 // 当需要将裁剪的结果发送到服务器时
+document.getElementById('confirm-crop').addEventListener('click', function() {
+    cropAndSendImage();
+    hideCropper();
+});
+
+document.getElementById('cancel-crop').addEventListener('click', function() {
+    hideCropper();
+});
+
+function hideCropper() {
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+    document.getElementById('image-cropper-container').style.display = 'none';
+}
+
 function cropAndSendImage() {
     if (cropper) {
         // 获取裁剪后的canvas
         const canvas = cropper.getCroppedCanvas();
+        // 提交form要csrfToken
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        // 将canvas转换为blob
+        canvas.toBlob(function(blob) {
+            const formData = new FormData();
+            formData.append('croppedImage', blob, 'cropped.png');
 
-        // 将canvas转换为base64编码的字符串（也可以转换为blob并上传）
-        const base64image = canvas.toDataURL('image/png');
+            // 发送裁剪后的图片到后端
+            fetch('/post/gptchat/image', { // 替换为实际的上传URL
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+               console.log('Upload successful:', data);
 
-        // TODO: 将base64image发送到服务器或进行其他处理
+                // 获取文本框 DOM 元素
+                const textareaElem = document.getElementById('message-input');
+
+                // 更新文本框的内容
+                textareaElem.value += data.extracted_text;
+            })
+            .catch(error => {
+                console.error('Upload failed:', error);
+                // TODO: 提示用户上传失败
+            });
+        }, 'image/png');
     }
 }
 
