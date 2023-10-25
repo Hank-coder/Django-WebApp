@@ -17,6 +17,19 @@ hljs.addPlugin(new CopyButtonPlugin());
 let cropper;
 
 // 上传图片预览功能
+
+function reinit()
+{
+ document.querySelector('.upload-icon').classList.remove('disabled-upload');
+}
+function hideCropper() {
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+    document.getElementById('image-cropper-container').style.display = 'none';
+}
+
 function triggerFileInput() {
     const fileInput = document.getElementById('file-input');
     fileInput.click();
@@ -33,6 +46,7 @@ function previewImage(input) {
 
             if (cropper) {
                 cropper.destroy();
+                cropper = null;
             }
 
             // 初始化Cropper.js
@@ -73,6 +87,7 @@ function previewImage(input) {
             document.getElementById('image-cropper-container').style.display = 'block';
             // 禁用上传按钮
             document.querySelector('.upload-icon').classList.add('disabled-upload');
+            document.getElementById('messages').scrollTop = 0;
 
             // 当需要将裁剪的结果发送到服务器时
             document.getElementById('confirm-crop').addEventListener('click', function() {
@@ -82,8 +97,8 @@ function previewImage(input) {
 
             document.getElementById('cancel-crop').addEventListener('click', function() {
                 hideCropper();
-                  // 禁用上传按钮
-                 document.querySelector('.upload-icon').classList.remove('disabled-upload');
+
+                document.querySelector('.upload-icon').classList.remove('disabled-upload');
             });
 
         }
@@ -92,14 +107,6 @@ function previewImage(input) {
     }
 }
 
-
-function hideCropper() {
-    if (cropper) {
-        cropper.destroy();
-        cropper = null;
-    }
-    document.getElementById('image-cropper-container').style.display = 'none';
-}
 
 function cropAndSendImage() {
     if (cropper) {
@@ -352,7 +359,6 @@ const ask_gpt = async (message) => {
 const clear_conversations = async () => {
   const elements = box_conversations.childNodes;
   let index = elements.length;
-
   if (index > 0) {
     while (index--) {
       const element = elements[index];
@@ -367,8 +373,8 @@ const clear_conversations = async () => {
 };
 
 const clear_conversation = async () => {
+  reinit();
   let messages = message_box.getElementsByTagName(`div`);
-
   while (messages.length > 0) {
     message_box.removeChild(messages[0]);
   }
@@ -425,10 +431,19 @@ const new_conversation = async () => {
 };
 
 const load_conversation = async (conversation_id) => {
+  reinit();
   let conversation = await JSON.parse(
     localStorage.getItem(`conversation:${conversation_id}`)
   );
   console.log(conversation, conversation_id);
+  // 添加文件加载部分
+  message_box.innerHTML += `<div id="image-cropper-container" style="display: none;">
+                        <div class="crop-buttons-container">
+                        <button id="confirm-crop">确定</button>
+                        <button id="cancel-crop">取消</button>
+                        </div>
+                        <img id="image-preview" src="" alt="Preview">
+                    </div>`
 
   for (item of conversation.items) {
     message_box.innerHTML += `
@@ -451,6 +466,7 @@ const load_conversation = async (conversation_id) => {
             </div>
         `;
   }
+
 
   document.querySelectorAll(`code`).forEach((el) => {
     hljs.highlightElement(el);
@@ -500,9 +516,17 @@ const add_message = async (conversation_id, role, content) => {
 };
 
 const load_conversations = async (limit, offset, loader) => {
+  reinit();
+  // 添加文件加载部分
+  message_box.innerHTML += `<div id="image-cropper-container" style="display: none;">
+                        <div class="crop-buttons-container">
+                        <button id="confirm-crop">确定</button>
+                        <button id="cancel-crop">取消</button>
+                        </div>
+                        <img id="image-preview" src="" alt="Preview">
+                    </div>`
   //console.log(loader);
   //if (loader === undefined) box_conversations.appendChild(spinner);
-
   let conversations = [];
   for (let i = 0; i < localStorage.length; i++) {
     if (localStorage.key(i).startsWith("conversation:")) {
