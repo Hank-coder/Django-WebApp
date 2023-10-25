@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
+import re
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -24,7 +25,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.203.214', '127.0.0.1', 'dedi2.1808.cf','2.wuxianliulianng.xyz']
+ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.203.214', '127.0.0.1', 'dedi2.1808.cf']
+
+
+def is_valid_host(host):
+    pattern = r'.*\.wuxianliulianng\.xyz$'
+    return re.match(pattern, host)
+
+
+if not DEBUG:  # You might want to do this only in production.
+    _host = os.environ.get('DJANGO_HOST_HEADER')  # Assuming you have access to the request header here.
+
+    if _host and is_valid_host(_host):
+        ALLOWED_HOSTS.append(_host)
 
 # 服务器端Https启用
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -136,7 +149,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 # 如果您的静态文件不在app的默认static文件夹下，您需要设置 STATICFILES_DIRS 以指向它们
-#STATICFILES_DIRS = [os.path.join(BASE_DIR, "static"), ]
+# STATICFILES_DIRS = [os.path.join(BASE_DIR, "static"), ]
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
