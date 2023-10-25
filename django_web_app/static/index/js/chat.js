@@ -14,6 +14,53 @@ let prompt_lock = false;
 
 hljs.addPlugin(new CopyButtonPlugin());
 
+let cropper;
+
+// 上传图片预览功能
+function triggerFileInput() {
+    const fileInput = document.getElementById('file-input');
+    fileInput.click();
+}
+
+function previewImage(input) {
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            const imagePreview = document.getElementById('image-preview');
+            imagePreview.src = e.target.result;
+
+            if (cropper) {
+                cropper.destroy();
+            }
+
+            // 初始化Cropper.js
+            cropper = new Cropper(imagePreview, {
+                aspectRatio: 16 / 9,  // 你可以调整这个值来改变裁剪框的宽高比
+                viewMode: 1,
+            });
+
+            document.getElementById('image-cropper-container').style.display = 'block';
+        }
+
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// 当需要将裁剪的结果发送到服务器时
+function cropAndSendImage() {
+    if (cropper) {
+        // 获取裁剪后的canvas
+        const canvas = cropper.getCroppedCanvas();
+
+        // 将canvas转换为base64编码的字符串（也可以转换为blob并上传）
+        const base64image = canvas.toDataURL('image/png');
+
+        // TODO: 将base64image发送到服务器或进行其他处理
+    }
+}
+
 function resizeTextarea(textarea) {
   textarea.style.height = '80px';
   textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
@@ -565,3 +612,4 @@ colorThemes.forEach((themeOption) => {
 });
 
 document.onload = setTheme();
+
