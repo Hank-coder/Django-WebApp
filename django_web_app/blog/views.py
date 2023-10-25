@@ -410,7 +410,7 @@ class GPTImageView(CreateView):
 
             try:
                 extracted_text = pytesseract.image_to_string(save_path, lang='chi_sim+eng', timeout=30)
-                extracted_text = re.sub(r'^[\s\n]+', '', extracted_text)
+                extracted_text = extracted_text.strip()
 
                 # 删除已经读取的图像文件
                 os.remove(save_path)

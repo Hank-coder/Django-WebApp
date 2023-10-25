@@ -48,7 +48,7 @@ function previewImage(input) {
                 const cropWidth = originalWidth * 0.3;
                 const cropHeight = originalHeight * 0.3;
 
-                // 计算裁剪框的初始位置
+                // 计算裁剪框的初始位置（居中）
                 const offsetX = (originalWidth - cropWidth) / 3;
                 const offsetY = (originalHeight - cropHeight) / 3;
 
@@ -73,23 +73,25 @@ function previewImage(input) {
             document.getElementById('image-cropper-container').style.display = 'block';
             // 禁用上传按钮
             document.querySelector('.upload-icon').classList.add('disabled-upload');
+
+            // 当需要将裁剪的结果发送到服务器时
+            document.getElementById('confirm-crop').addEventListener('click', function() {
+                cropAndSendImage();
+                hideCropper();
+            });
+
+            document.getElementById('cancel-crop').addEventListener('click', function() {
+                hideCropper();
+                  // 禁用上传按钮
+                 document.querySelector('.upload-icon').classList.remove('disabled-upload');
+            });
+
         }
 
         reader.readAsDataURL(input.files[0]);
     }
 }
 
-// 当需要将裁剪的结果发送到服务器时
-document.getElementById('confirm-crop').addEventListener('click', function() {
-    cropAndSendImage();
-    hideCropper();
-});
-
-document.getElementById('cancel-crop').addEventListener('click', function() {
-    hideCropper();
-      // 禁用上传按钮
-     document.querySelector('.upload-icon').classList.remove('disabled-upload');
-});
 
 function hideCropper() {
     if (cropper) {
