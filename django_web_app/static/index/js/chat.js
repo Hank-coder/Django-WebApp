@@ -45,10 +45,10 @@ function previewImage(input) {
                 const originalHeight = imageData.naturalHeight;
 
                 // 计算裁剪框的初始尺寸（原图片尺寸的一半）
-                const cropWidth = originalWidth * 0.5;
-                const cropHeight = originalHeight * 0.5;
+                const cropWidth = originalWidth * 0.3;
+                const cropHeight = originalHeight * 0.3;
 
-                // 计算裁剪框的初始位置（居中）
+                // 计算裁剪框的初始位置
                 const offsetX = (originalWidth - cropWidth) / 3;
                 const offsetY = (originalHeight - cropHeight) / 3;
 
