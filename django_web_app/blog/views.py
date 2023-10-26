@@ -279,7 +279,7 @@ class GPTChatCreateView(CreateView):
     def post(self, request, *args, **kwargs):
         try:
             body_unicode = request.body.decode('utf-8')
-            body_data = loads(body_unicode)
+            body_data = loads(body_unicode)  # 获取所有Body信息
 
             jailbreak = body_data['jailbreak']
             internet_access = body_data['meta']['content']['internet_access']
