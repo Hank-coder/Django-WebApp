@@ -1,5 +1,4 @@
 {% extends "blog/base.html" %}
-        {% csrf_token %}
 {% block extra_css %}  <!--extra_css 要在base中定义！-->
 <style>
     body {
@@ -68,6 +67,7 @@
 {% block content %}
 <div class="jumbotron mt-3 shadow-lg">
     <form method="post" enctype="multipart/form-data" id="imageForm">
+        {% csrf_token %}
         <label for="prompt">图片要求:</label>
         <input type="text" name="prompt" value="{{ request.POST.prompt }}" required id="promptInput">
         <button type="submit" id="submitButton">生成</button>
