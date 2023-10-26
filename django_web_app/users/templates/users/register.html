@@ -5,13 +5,13 @@
         <form method="POST">
             {% csrf_token %}
             <fieldset class="form-group">
-                <legend class="border-bottom mb-4">加入我们</legend>
+                <legend class="border-bottom mb-4">注册</legend>
 
                 <!-- Other fields rendered manually, REPLACE {{ form|crispy }}-->
-                <div> 用户名 {{ form.username|as_crispy_field }} </div>
+                <div>  {{ form.username|as_crispy_field }} </div>
                 <div> 邮箱 {{ form.email|as_crispy_field }}   </div>
-                <div> 密码 {{ form.password1|as_crispy_field }}</div>
-                <div> 再次输入密码 {{ form.password2|as_crispy_field }} </div>
+                <div> {{ form.password1|as_crispy_field }}</div>
+                <div>  {{ form.password2|as_crispy_field }} </div>
             </fieldset>
             <div class="form-group">
                 <button class="btn btn-outline-info" type="submit">注册</button>
@@ -19,7 +19,7 @@
         </form>
         <div class="border-top pt-3">
             <small class="text-muted">
-                Already Have An Account? <a class="ml-2" href="{% url 'login' %}">登录</a>
+                已经有账号? <a class="ml-2" href="{% url 'login' %}">登录</a>
             </small>
         </div>
     </div>
