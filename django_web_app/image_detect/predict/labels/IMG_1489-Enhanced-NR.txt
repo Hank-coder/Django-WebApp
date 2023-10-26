@@ -1,5 +1,0 @@
-0.15 seashore
-0.13 wing
-0.08 rapeseed
-0.07 beacon
-0.07 barn
