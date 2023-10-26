@@ -292,9 +292,9 @@ class GPTChatCreateView(CreateView):
 
             extra = []
             query_content = prompt["content"]  # 假设 prompt 已经定义
-            internet_access = True  # 或根据需要设置
+
             result_count = 3
-            extra = fetch_search_results(query_content, internet_access, result_count)
+            extra = fetch_search_results(query_content, internet_access, result_count)  # 联网搜索
 
             conversation = [{'role': 'system', 'content': system_message}] + \
                            extra + special_instructions[jailbreak] + \

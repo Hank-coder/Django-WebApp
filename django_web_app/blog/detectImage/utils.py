@@ -193,8 +193,10 @@ def get_apikey(openai):
 
 
 def fetch_search_results(query, internet_access=True, result_count=3):
-    api_key = os.environ.get('BING_API_KEY')
+
     if internet_access:
+        print("Bing Connected")
+        api_key = os.environ.get('BING_API_KEY')
         headers = {
             'Ocp-Apim-Subscription-Key': api_key,
         }
@@ -219,4 +221,4 @@ def fetch_search_results(query, internet_access=True, result_count=3):
         extra = [{'role': 'user', 'content': blob}]
         return extra
     else:
-        return None
+        return []
