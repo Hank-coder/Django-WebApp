@@ -25,19 +25,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.203.214', '127.0.0.1', 'dedi2.1808.cf']
+ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.203.214', '127.0.0.1', '8.210.253.73']
 
-
-def is_valid_host(host):
-    pattern = r'.*\.wuxianliulianng\.xyz$'
-    return re.match(pattern, host)
-
-
-if not DEBUG:  # You might want to do this only in production.
-    _host = os.environ.get('DJANGO_HOST_HEADER')  # Assuming you have access to the request header here.
-
-    if _host and is_valid_host(_host):
-        ALLOWED_HOSTS.append(_host)
 
 # 服务器端Https启用
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -107,7 +96,7 @@ DATABASES = {
         'NAME': 'webdata',
         'USER': 'root',
         'PASSWORD': '!@cyh1qw23er45T',
-        'HOST': '38.60.203.214',  # Set to the address of your MySQL server
+        'HOST': '8.210.253.73',  # Set to the address of your MySQL server
         'PORT': '3306',  # Default MySQL port
         'OPTIONS': {
             'charset': 'utf8mb4',
