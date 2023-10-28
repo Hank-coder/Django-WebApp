@@ -130,6 +130,37 @@
                 margin-left: 90px; /* 根据第一个按钮的宽度和间距调整 */
             }
 
+            {#图片上传提示框#}
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.7);
+                z-index: 1000;
+            }
+
+            .modal-content {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                padding: 40px;
+                background-color: #ffffff;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                width: 20%;             /* 设定宽度为60%的视口宽度 */
+                text-align: center;
+                font-size: 20px;
+            }
+
+            .modal-close {
+                float: right;
+                font-size: 15px;
+                cursor: pointer;
+            }
+
 
         </style>
 
@@ -180,6 +211,13 @@
                         <button id="cancel-crop">取消</button>
                         </div>
                         <img id="image-preview" src="" alt="Preview">
+                    </div>
+                </div>
+                <!-- Loading Modal -->
+                <div id="loading-modal" class="modal">
+                    <div class="modal-content">
+                        <span class="modal-close">&times;</span>
+                        <p id="modal-message">上传图片...</p>
                     </div>
                 </div>
                 <div class="user-input">

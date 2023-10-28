@@ -34,6 +34,7 @@ def user_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/Files/username/<filename>
     return 'Files/{0}/{1}'.format(instance.author.username, filename)
 
+
 class Post(models.Model):
     file = models.FileField(upload_to=user_directory_path, null=True, blank=True)
     language = models.ForeignKey(Language, on_delete=models.CASCADE, default=1)
@@ -65,6 +66,9 @@ class Post(models.Model):
 class Post_Photo_Category(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+
+    class Meta:  # migrate不要新建表
+        managed = False
 
 
 class PostAudio(models.Model):

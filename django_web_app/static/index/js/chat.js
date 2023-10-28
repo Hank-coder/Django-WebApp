@@ -35,25 +35,33 @@ function triggerFileInput() {
     fileInput.click();
 }
 
-function previewImage(input) {
+function previewImage(inputOrBlob) {
+    let blob;
 
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
+    if (inputOrBlob instanceof Blob) {
+        blob = inputOrBlob;
+    } else if (inputOrBlob.files && inputOrBlob.files[0]) {
+        blob = inputOrBlob.files[0];
+    } else {
+        return; // 如果不是Blob或文件输入，直接返回
+    }
 
-        reader.onload = function (e) {
-            const imagePreview = document.getElementById('image-preview');
-            imagePreview.src = e.target.result;
+    const reader = new FileReader();
 
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
+    reader.onload = function (e) {
+        const imagePreview = document.getElementById('image-preview');
+        imagePreview.src = e.target.result;
 
-            // 初始化Cropper.js
-            cropper = new Cropper(imagePreview, {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+
+        // 初始化Cropper.js
+        cropper = new Cropper(imagePreview, {
             viewMode: 1,
             ready: function() {
-               // 获取图片的原始尺寸
+                // 获取图片的原始尺寸
                 const imageData = this.cropper.getImageData();
                 const originalWidth = imageData.naturalWidth;
                 const originalHeight = imageData.naturalHeight;
@@ -84,36 +92,64 @@ function previewImage(input) {
             }
         });
 
-            document.getElementById('image-cropper-container').style.display = 'block';
-            // 禁用上传按钮
-            document.querySelector('.upload-icon').classList.add('disabled-upload');
-            document.getElementById('messages').scrollTop = 0;
+        document.getElementById('image-cropper-container').style.display = 'block';
+        // 禁用上传按钮
+        document.querySelector('.upload-icon').classList.add('disabled-upload');
+        document.getElementById('messages').scrollTop = 0;
 
-            // 当需要将裁剪的结果发送到服务器时
-            document.getElementById('confirm-crop').addEventListener('click', function() {
-                cropAndSendImage();
-                hideCropper();
-            });
+        // 当需要将裁剪的结果发送到服务器时
+        document.getElementById('confirm-crop').addEventListener('click', function() {
+            cropAndSendImage();
+            hideCropper();
+        });
 
-            document.getElementById('cancel-crop').addEventListener('click', function() {
-                hideCropper();
+        document.getElementById('cancel-crop').addEventListener('click', function() {
+            hideCropper();
 
-                document.querySelector('.upload-icon').classList.remove('disabled-upload');
-            });
-
-        }
-
-        reader.readAsDataURL(input.files[0]);
+            document.querySelector('.upload-icon').classList.remove('disabled-upload');
+        });
     }
+
+    reader.readAsDataURL(blob);
 }
 
 
+// 允许直接粘贴图片
+document.getElementById('message-input').addEventListener('paste', function(e) {
+    let clipboardData = e.clipboardData || window.clipboardData;
+    let items = clipboardData.items;
+
+    for (let i = 0; i < items.length; i++) {
+        // 如果是图片内容
+        if (items[i].type.indexOf('image') !== -1) {
+            let blob = items[i].getAsFile();
+
+            // 用你的函数处理这个图片
+            previewImage(blob);  // 现在可以直接使用 previewImage
+            e.preventDefault(); // 防止图片内容被粘贴到文本框中
+            break; // 停止循环
+        }
+    }
+});
+
 function cropAndSendImage() {
+    const modal = document.getElementById('loading-modal');
+    const modalMessage = document.getElementById('modal-message');
+    const modalClose = document.querySelector('.modal-close');
+
+    modalClose.onclick = function() {
+        modal.style.display = "none";
+    }
+
     if (cropper) {
         // 获取裁剪后的canvas
         const canvas = cropper.getCroppedCanvas();
         // 提交form要csrfToken
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        modal.style.display = "block"; // 显示模态对话框
+        modalMessage.textContent = "文本转换中..."; // 设置上传消息
+
         // 将canvas转换为blob
         canvas.toBlob(function(blob) {
             const formData = new FormData();
@@ -130,7 +166,7 @@ function cropAndSendImage() {
             .then(response => response.json())
             .then(data => {
                console.log('Upload successful:', data);
-
+               modalMessage.textContent = "转换成功!"; // 设置成功消息
                 // 获取文本框 DOM 元素
                 const textareaElem = document.getElementById('message-input');
 
@@ -138,9 +174,12 @@ function cropAndSendImage() {
                 textareaElem.value += data.extracted_text;
 
                 document.querySelector('.upload-icon').classList.remove('disabled-upload');
+                modal.style.display = "none"; // 显示模态对话框
             })
             .catch(error => {
                 console.error('Upload failed:', error);
+                modalMessage.textContent = "文本识别识别"; // 设置失败消息
+                modal.style.display = "none"; // 显示模态对话框
             });
         }, 'image/png');
     }
