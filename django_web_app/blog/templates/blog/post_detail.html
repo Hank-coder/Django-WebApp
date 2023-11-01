@@ -5,7 +5,8 @@
     <div class="media-body">
       <div class="">
         <div class="d-flex justify-content-between">
-        <a class="mr-2 mt-0 mb-0  text-dark" href="{% url 'user-posts' object.author.username  %}"><h3>{{ post.platform.name }} :
+        <a class="mr-2 mt-0 mb-0  text-dark" href="{% url 'user-posts' object.author.username  %}">返回</a>
+        <a class="mr-2 mt-0 mb-0  text-dark"><h3>{{ post.platform.name }} :
                 {% for category in post.photo_category.all %}
                     {{ category.name }}
                     {% if not forloop.last %}, {% endif %}
