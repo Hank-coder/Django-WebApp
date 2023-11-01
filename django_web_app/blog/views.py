@@ -5,7 +5,7 @@ import openai
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, HttpResponseRedirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 import os
@@ -33,7 +33,7 @@ from .detectImage.image2text import generate_text
 from .detectImage.utils import get_apikey, fetch_search_results
 from .models import Post, Category, PostAudio
 import operator
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib.staticfiles.views import serve
 
 from django.db.models import Q
@@ -85,6 +85,10 @@ class UserPostListView(ListView):
 
     def get_queryset(self):
         user = get_object_or_404(User, username=self.kwargs.get('username'))
+        #  prefetch_related('photo_category')  =》 through='Post_Photo_Category'
+        #  使用prefetch_related方法是为了优化数据库查询。当你在之后访问与Post对象关联的photo_category多对多关系时，
+        #  它将减少数据库查询的数量。在这里，与每个Post对象相关的photo_category将被预先加载，
+        #  这样当您循环遍历每个Post对象并访问其photo_category时，不需要为每个Post对象进行额外的数据库查询。
         return Post.objects.filter(author=user).order_by('-date_posted').prefetch_related('photo_category')
 
 
@@ -98,6 +102,7 @@ class PostForm(forms.ModelForm):  # 定义的表单
         model = Post
         fields = ['file', 'language', 'platform', 'photo_category', 'special_request']
 
+    # 指定photo_category从Category获得数据
     photo_category = forms.ModelMultipleChoiceField(
         queryset=Category.objects.all(),
         widget=forms.SelectMultiple(attrs={'size': '10'}))
@@ -112,6 +117,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):  # 朋友圈文本生成
         form.instance.author = self.request.user
 
         # First save the form to ensure that the file is saved
+        # ['file', 'language', 'platform', 'photo_category', 'special_request'] 已经到数据库中了！
         response = super().form_valid(form)
 
         # # Notify user that the processing is starting
@@ -145,17 +151,26 @@ class PostCreateView(LoginRequiredMixin, CreateView):  # 朋友圈文本生成
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
     template_name = 'blog/post_form.html'
-    fields = ['file', 'language', 'platform', 'photo_category', 'special_request']
 
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
+    def post(self, request, *args, **kwargs):
+        post_id = self.kwargs['pk']
+        post = get_object_or_404(Post, id=post_id)  # 数据库获取信息
+        new_content = request.POST.get("content")
+
+        if new_content:
+            post.generate_text = new_content
+            post.save()
+
+        return HttpResponseRedirect(self.get_success_url())
 
     def test_func(self):
         post = self.get_object()
         if self.request.user == post.author:
             return True
         return False
+
+    def get_success_url(self):
+        return reverse('user-posts', kwargs={'username': self.request.user.username})
 
 
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):

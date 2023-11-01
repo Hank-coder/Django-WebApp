@@ -29,7 +29,6 @@ def generate_text(file_path, other_data):
         # 创建一个空字典来保存结果
         results_dict_cls = {}
 
-
         # 从文件名中获取图像的基本名（不带扩展名）
         base_name = os.path.basename(os.path.splitext(file_path)[0])
 

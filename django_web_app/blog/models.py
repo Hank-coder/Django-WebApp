@@ -38,7 +38,7 @@ def user_directory_path(instance, filename):
 class Post(models.Model):
     file = models.FileField(upload_to=user_directory_path, null=True, blank=True)
     language = models.ForeignKey(Language, on_delete=models.CASCADE, default=1)
-    # platform是一个ForeignKey到Platform模型。这意味着您可以通过post.platform.name直接访问与某个帖子相关的平台的名称
+    # platform是一个ForeignKey到Platform表的模型。这意味着您可以通过post.platform.name直接访问与某个帖子相关的平台的名称
     platform = models.ForeignKey(Platform, on_delete=models.CASCADE, default=1)
     # Post_Photo_Category（或之前提到的PostCategory）是一个"through"模型，
     # 用于在Django中表示两个模型之间的多对多关系。在这种情况下，Post和Category有一个多对多的关系，表示一个Post可以有多个Category，同时一个Category也可以与多个Post关联。
@@ -62,12 +62,23 @@ class Post(models.Model):
         return reverse('post-detail', kwargs={'pk': self.pk})
 
 
-# 定义Through模型
+#  Post_Photo_Category:里面存的就是post和category的一对多关系   ： 定义Through模型
 class Post_Photo_Category(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    # 这个模型是一个"through"模型，用于在Django中表示两个模型之间的多对多关系。
+    # 在这种情况下，Post和Category有一个多对多的关系，表示一个Post可以有多个Category，
+    # 同时一个Category也可以与多个Post关联。
 
-    class Meta:  # migrate不要新建表
+    # ForeignKey到Post模型。每个记录都链接到一个Post。
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, default="none")
+    # ForeignKey到Category模型。每个记录都链接到一个Category。
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, default=1)
+
+    class Meta:
+        # 这里的Meta类定义了模型的一些元数据。
+
+        # 设置为False表示Django的迁移系统不会管理这个模型的数据库表。
+        # 这意味着Django不会为这个模型自动创建、修改或删除数据库表。
+        # 如果您需要在数据库中有这个表，您必须手动创建它。
         managed = False
 
 

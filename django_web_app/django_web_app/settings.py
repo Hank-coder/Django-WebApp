@@ -96,7 +96,7 @@ DATABASES = {
         'NAME': 'webdata',
         'USER': 'root',
         'PASSWORD': '!@cyh1qw23er45T',
-        'HOST': '38.60.203.214',  # Set to the address of your MySQL server
+        'HOST': '1.12.229.115',  # Set to the address of your MySQL server
         'PORT': '3306',  # Default MySQL port
         'OPTIONS': {
             'charset': 'utf8mb4',
