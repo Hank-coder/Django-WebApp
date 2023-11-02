@@ -317,11 +317,10 @@ class GPTChatCreateView(CreateView):
             # print(conversation)
             url = f"{self.openai_api_base}/v1/chat/completions"
 
-            # 限制用户使用gpt-4
-            if not request.user.is_authenticated and body_data['model'] == 'gpt-4':
+            if body_data['model'] == 'gpt-4' and (not request.user.is_authenticated or not request.user.is_staff):
                 body_data['model'] = 'gpt-3.5-turbo'
 
-            # print(body_data['model'])
+            print(body_data['model'])
             # 给openai发送请求
             gpt_resp = post(
                 url=url,
