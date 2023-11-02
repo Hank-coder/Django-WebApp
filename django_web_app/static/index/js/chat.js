@@ -132,6 +132,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
+// 只允许登录的用户访问4.0
+async function setupModelDropdown() {
+    let loggedIn = await isUserLoggedIn();
+
+    let modelDropdown = document.getElementById('model');
+    let gpt4Option = document.querySelector('#model option[value="gpt-4"]');
+
+    if (!loggedIn && gpt4Option) {
+        gpt4Option.disabled = true;
+    }
+}
+// Call this function when the document is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    setupModelDropdown();
+});
 
 // 允许直接粘贴图片
 document.getElementById('message-input').addEventListener('paste', function(e) {
