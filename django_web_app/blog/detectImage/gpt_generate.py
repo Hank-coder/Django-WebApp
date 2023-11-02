@@ -77,7 +77,7 @@ def get_completion_messages(system_message):
 
 def get_completion_from_messages(
         messages,
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         temperature=0.8,
         max_tokens=3000
 ):
@@ -103,7 +103,7 @@ def generate_corrected_transcript(temperature, audio_file, combined_request):
     user_transcript = openai.Audio.transcribe("whisper-1", audio_file).text
 
     response = openai.ChatCompletion.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         temperature=temperature,
         messages=[
             {
@@ -136,7 +136,7 @@ def generate_corrected_text(temperature, text_info, combined_request):
         system_prompt = "Please help me answer the user's questions."
 
     response = openai.ChatCompletion.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         temperature=temperature,
         messages=[
             {
