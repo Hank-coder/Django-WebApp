@@ -96,6 +96,17 @@ class PostAudio(models.Model):
     # def get_absolute_url(self):
     #     return reverse('post-detail', kwargs={'pk': self.pk})
 
-# Chat图片数据库
-# class UploadedImage(models.Model):
-#     image = models.ImageField(upload_to='uploaded_images/')
+
+class Conversation(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # 关联到用户
+    conversation_id = models.CharField(max_length=255, unique=True)  # 用字符串表示的对话ID
+    title = models.CharField(max_length=255)
+    last_updated = models.DateTimeField(auto_now=True)
+
+
+class ChatMessage(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)  # 关联到对话
+    role = models.CharField(max_length=20)  # 角色，例如'sender', 'receiver'等
+    content = models.TextField()  # 消息内容
+    timestamp = models.DateTimeField(auto_now_add=True)  # 记录消息的发送时间
+

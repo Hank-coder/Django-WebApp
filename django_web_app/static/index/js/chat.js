@@ -11,11 +11,12 @@ const spinner = box_conversations.querySelector(".spinner");
 const stop_generating = document.querySelector(`.stop_generating`);
 const send_button = document.querySelector(`#send-button`);
 let prompt_lock = false;
+// 使用此函数获取北京时间
+const beijingTime = getBeijingTime();
 
 hljs.addPlugin(new CopyButtonPlugin());
 
 let cropper;
-
 // 上传图片预览功能
 
 function reinit()
@@ -112,6 +113,24 @@ function previewImage(inputOrBlob) {
 
     reader.readAsDataURL(blob);
 }
+
+// 登录按钮隐藏
+
+
+
+document.addEventListener('DOMContentLoaded', async function() {
+    let cloudDataButton = document.getElementById('cloudDataButton');
+    let loginURL = cloudDataButton.getAttribute('data-login-url');
+
+    let loggedIn = await isUserLoggedIn();
+    if (loggedIn) {
+        cloudDataButton.style.display = "none";  // Hide the button for logged-in users
+    } else {
+        cloudDataButton.addEventListener('click', function() {
+            window.location.href = loginURL;
+        });
+    }
+});
 
 
 // 允许直接粘贴图片
@@ -228,6 +247,23 @@ const remove_cancel_button = async () => {
     stop_generating.classList.add(`stop_generating-hidden`);
   }, 300);
 };
+
+async function isUserLoggedIn() {
+    try {
+        const response = await fetch('/check-user-status/');
+        const data = await response.json();
+
+        if (data.status === 'logged_in') {
+            return true;
+        } else {
+            return false;
+        }
+    } catch (error) {
+        console.error("Error checking user login status:", error);
+        return false;
+    }
+}
+
 
 const ask_gpt = async (message) => {
   try {
@@ -348,7 +384,9 @@ const ask_gpt = async (message) => {
 
       window.scrollTo(0, 0);
       message_box.scrollTo({ top: message_box.scrollHeight, behavior: "auto" });
-    }
+    }  // 流传输结束
+
+
 
     // if text contains :
     if (
@@ -362,6 +400,8 @@ const ask_gpt = async (message) => {
 
     add_message(window.conversation_id, "user", message);
     add_message(window.conversation_id, "assistant", text);
+
+    //入数据库
 
     message_box.scrollTop = message_box.scrollHeight;
     await remove_cancel_button();
@@ -397,8 +437,7 @@ const ask_gpt = async (message) => {
     window.scrollTo(0, 0);
     document.querySelector('.upload-icon').classList.remove('disabled-upload'); // 启用按钮
   }
-};
-
+}; // end ask_gpt
 const clear_conversations = async () => {
   const elements = box_conversations.childNodes;
   let index = elements.length;
@@ -455,17 +494,36 @@ const hide_option = async (conversation_id) => {
   yes.style.display = "none";
   not.style.display = "none"; 
 }
-
 const delete_conversation = async (conversation_id) => {
+
+  // Remove from local storage regardless of login status
   localStorage.removeItem(`conversation:${conversation_id}`);
 
-  const conversation = document.getElementById(`convo-${conversation_id}`);
-    conversation.remove();
+  // Remove the conversation element from the DOM
+  const conversationElement = document.getElementById(`convo-${conversation_id}`);
+  if (conversationElement) {
+    conversationElement.remove();
+  }
 
-  if (window.conversation_id == conversation_id) {
+  // If the user is logged in, make a request to the server to delete the conversation
+  if (await isUserLoggedIn()) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+    await fetch('/post/deletechat/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken // Make sure to include CSRF token for security
+      },
+      body: JSON.stringify({ conversation_id: conversation_id })
+    });
+  }
+
+  // If the currently active conversation is the one being deleted, start a new conversation
+  if (window.conversation_id === conversation_id) {
     await new_conversation();
   }
 
+  // Reload the conversations
   await load_conversations(20, 0, true);
 };
 
@@ -561,7 +619,7 @@ const add_conversation = async (conversation_id, title) => {
     );
   }
 };
-
+// 后端add_conversation 和 add_message 合并
 const add_message = async (conversation_id, role, content) => {
   before_adding = JSON.parse(
     localStorage.getItem(`conversation:${conversation_id}`)
@@ -576,50 +634,105 @@ const add_message = async (conversation_id, role, content) => {
     `conversation:${conversation_id}`,
     JSON.stringify(before_adding)
   ); // update conversation
+
+     // Save to the database
+  await save_message_to_db(conversation_id, role, content);
 };
+
+async function save_message_to_db(conversation_id, sender, content) {
+    if (await isUserLoggedIn()) { // 确认用户已登录
+        // 获取令牌
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+
+        const response = await fetch('/post/savechat/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                 'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                conversation_id: conversation_id,
+                role: sender,
+                content: content
+            })
+        });
+        //localStorage.setItem('last_updated', getBeijingTime());
+        return response.json();
+    } else {
+        console.log('User not logged in. Message not saved.');
+        return null;
+    }
+}
+
 
 // 流传输
 const load_conversations = async (limit, offset, loader) => {
   reinit();
+
   // 添加文件加载部分
-  message_box.innerHTML += `<div id="image-cropper-container" style="display: none;">
-                        <div class="crop-buttons-container">
-                        <button id="confirm-crop">确定</button>
-                        <button id="cancel-crop">取消</button>
-                        </div>
-                        <img id="image-preview" src="" alt="Preview">
-                    </div>`
-  //console.log(loader);
-  //if (loader === undefined) box_conversations.appendChild(spinner);
+  message_box.innerHTML += `
+    <div id="image-cropper-container" style="display: none;">
+      <div class="crop-buttons-container">
+        <button id="confirm-crop">确定</button>
+        <button id="cancel-crop">取消</button>
+      </div>
+      <img id="image-preview" src="" alt="Preview">
+    </div>`;
+
   let conversations = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    if (localStorage.key(i).startsWith("conversation:")) {
-      let conversation = localStorage.getItem(localStorage.key(i));
-      conversations.push(JSON.parse(conversation));
+  const TIME_TOLERANCE = 10 * 1000;  // 10 seconds in milliseconds
+
+  if (await isUserLoggedIn()) {
+    const response = await fetch('/post/loadchat/');
+    const serverData = await response.json();
+    const local_last_updated = new Date(localStorage.getItem('last_updated') || 0);
+    const server_last_updated = new Date(serverData.last_updated);
+
+    if ((server_last_updated - local_last_updated) > TIME_TOLERANCE) {
+      for (let conversation of serverData.conversations) {
+        localStorage.setItem(`conversation:${conversation.id}`, JSON.stringify(conversation));
+        conversations.push(conversation);
+      }
+      localStorage.setItem('last_updated', server_last_updated);
+    } else {
+      for (let i = 0; i < localStorage.length; i++) {
+        if (localStorage.key(i).startsWith("conversation:")) {
+          let conversation = localStorage.getItem(localStorage.key(i));
+          conversations.push(JSON.parse(conversation));
+        }
+      }
+    }
+  } else {
+    // If the user is not authenticated, only use locally stored conversations
+    for (let i = 0; i < localStorage.length; i++) {
+      if (localStorage.key(i).startsWith("conversation:")) {
+        let conversation = localStorage.getItem(localStorage.key(i));
+        conversations.push(JSON.parse(conversation));
+      }
     }
   }
 
-  //if (loader === undefined) spinner.parentNode.removeChild(spinner)
   await clear_conversations();
 
   for (conversation of conversations) {
     box_conversations.innerHTML += `
-    <div class="convo" id="convo-${conversation.id}">
-      <div class="left" onclick="set_conversation('${conversation.id}')">
+      <div class="convo" id="convo-${conversation.id}">
+        <div class="left" onclick="set_conversation('${conversation.id}')">
           <i class="fa-regular fa-comments"></i>
           <span class="convo-title">${conversation.title}</span>
-      </div>
-      <i onclick="show_option('${conversation.id}')" class="fa-regular fa-trash" id="conv-${conversation.id}"></i>
-      <i onclick="delete_conversation('${conversation.id}')" class="fa-regular fa-check" id="yes-${conversation.id}" style="display:none;"></i>
-      <i onclick="hide_option('${conversation.id}')" class="fa-regular fa-x" id="not-${conversation.id}" style="display:none;"></i>
-    </div>
-    `;
+        </div>
+        <i onclick="show_option('${conversation.id}')" class="fa-regular fa-trash" id="conv-${conversation.id}"></i>
+        <i onclick="delete_conversation('${conversation.id}')" class="fa-regular fa-check" id="yes-${conversation.id}" style="display:none;"></i>
+        <i onclick="hide_option('${conversation.id}')" class="fa-regular fa-x" id="not-${conversation.id}" style="display:none;"></i>
+      </div>`;
   }
 
   document.querySelectorAll(`code`).forEach((el) => {
     hljs.highlightElement(el);
   });
 };
+
+
 
 document.getElementById(`cancelButton`).addEventListener(`click`, async () => {
   window.controller.abort();
@@ -648,6 +761,7 @@ const uuid = () => {
   );
 };
 
+window.conversation_id = uuid();
 const message_id = () => {
   random_bytes = (Math.floor(Math.random() * 1338377565) + 2956589730).toString(
     2
@@ -778,4 +892,13 @@ colorThemes.forEach((themeOption) => {
 });
 
 document.onload = setTheme();
+
+function getBeijingTime() {
+    const beijingOffset = 8; // Beijing is UTC+8
+    const d = new Date();
+    const utc = d.getTime() + d.getTimezoneOffset() * 60000;
+    const nd = new Date(utc + (3600000 * beijingOffset));
+    return nd.toISOString();
+}
+
 

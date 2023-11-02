@@ -3,7 +3,7 @@ import re
 
 import openai
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, HttpResponseRedirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -31,7 +31,7 @@ from .detectImage.detectVoice.audio2text import gpt_audio_response, gpt_text_res
 from .detectImage.gpt_generate import generate_image
 from .detectImage.image2text import generate_text
 from .detectImage.utils import get_apikey, fetch_search_results
-from .models import Post, Category, PostAudio
+from .models import Post, Category, PostAudio, ChatMessage, Conversation
 import operator
 from django.urls import reverse_lazy, reverse
 from django.contrib.staticfiles.views import serve
@@ -369,6 +369,88 @@ class GPTChatCreateView(CreateView):
             }, status=400)
 
 
+# 入库
+class SaveChat(LoginRequiredMixin, CreateView):
+    model = ChatMessage
+    fields = ['content', 'sender', 'conversation_id']
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            user = request.user
+            conversation_id = data.get('conversation_id')
+            role = data.get('role')
+            content = data.get('content')
+
+            # 确保对话存在
+            conversation, created = Conversation.objects.get_or_create(
+                user=user,
+                conversation_id=conversation_id,
+            )
+
+            # 如果对话是新创建的，可以添加标题
+            conversation.title = content[:10];
+            conversation.save()  # auto_now=True会自动为您处理时间更新
+
+            # 添加消息到对话
+            ChatMessage.objects.create(
+                conversation=conversation,
+                role=role,
+                content=content,
+                timestamp=timezone.now()
+            )
+
+            return JsonResponse({'status': 'success', 'message': 'Message saved successfully'})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON format'}, status=400)
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+class LoadChat(LoginRequiredMixin, CreateView):
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        conversations_query = Conversation.objects.filter(user=user).order_by('-id')
+        conversations = []
+        last_updated = None
+
+        for conversation in conversations_query:
+            chat_messages = conversation.chatmessage_set.all().values('role', 'content')
+            conversations.append({
+                'id': conversation.conversation_id,
+                'title': conversation.title,
+                'items': list(chat_messages),
+            })
+            if last_updated is None or conversation.last_updated > last_updated:
+                last_updated = conversation.last_updated
+
+        return JsonResponse({'conversations': conversations, 'last_updated': last_updated})
+
+
+class DeleteChat(LoginRequiredMixin, CreateView):
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            conversation_id = data.get('conversation_id')
+
+            # Check if the conversation exists and user owns it
+            conversation = Conversation.objects.filter(conversation_id=conversation_id, user=request.user).first()
+            if conversation:
+                conversation.delete()
+
+            return JsonResponse({'status': 'success', 'message': 'Conversation deleted successfully.'})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
 class ImageCreateView(LoginRequiredMixin, CreateView):
     template_name = 'blog/image_create.html'
 
@@ -466,3 +548,10 @@ def clean_text(text):
 
     # 否则，返回到最后一个句子结束的位置
     return cleaned_text[:cutoff + 1]
+
+
+def check_user_logged_in(request):
+    if request.user.is_authenticated:
+        return JsonResponse({'status': 'logged_in'})
+    else:
+        return JsonResponse({'status': 'not_logged_in'})

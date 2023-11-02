@@ -184,15 +184,20 @@
                 <div class="bottom_buttons">
                     <button onclick="delete_conversations()">
                         <i class="fa-regular fa-trash"></i>
-                        <span>清空会话</span>
+                        <span>清空本地缓存</span>
                     </button>
+                    <br>
                     <div class="info">
-                        <i class="fa-regular fa-circle-info">测试版
-                            数据将储存在本地 请及时保存</i>
-{#                        <span class="convo-title"><br>#}
-{#                            Version: 0.0.1-beta<br>#}
-{#                            Release: 2023<br>#}
-{#                        </span>#}
+                        <span class="convo-title">
+                            版本: 1.0.0-beta<br>
+                            Release: 2023/11<br>
+                            Bug 请私信肥猫<br><br>
+
+                            新增云数据存储功能<br>
+                            <button id="cloudDataButton" data-login-url="{% url 'login' %}">
+                                <i class="fa-regular fa-circle-info">请登录</i></button>
+                        </span>
+                        <br>
                     </div>
                 </div>
             </div>

@@ -6,14 +6,20 @@ from .views import (
     PostUpdateView,
     PostDeleteView,
     UserPostListView,
-    GPTAudioCreateView, GPTAudioUpdateView, ImageCreateView, GPTChatCreateView, GPTImageView,
+    GPTAudioCreateView, GPTAudioUpdateView, ImageCreateView, GPTChatCreateView, GPTImageView, SaveChat, LoadChat,
+    DeleteChat,
 )
 from . import views
+
+
 
 urlpatterns = [
     path('', PostListView.as_view(), name='blog-home'),  # 首页
 
     path('post/gptchat/', GPTChatCreateView.as_view(), name='gpt-chat'),  # gpt聊天界面
+    path('post/savechat/', SaveChat.as_view(), name='save-chat'),
+    path('post/loadchat/', LoadChat.as_view(), name='load-chat'),
+    path('post/deletechat/', DeleteChat.as_view(), name='delete-chat'),
     path('post/gptchat/image', GPTImageView.as_view(), name='gpt-image'),
 
     path('user/<str:username>', UserPostListView.as_view(), name='user-posts'),
@@ -29,4 +35,6 @@ urlpatterns = [
     path('media/Files/<int:pk>', PostDeleteView.as_view(), name='post-delete'),
     path('search/', views.search, name='search'),
     path('about/', views.about, name='blog-about'),
+
+    path('check-user-status/', views.check_user_logged_in, name='check_user_status'),
 ]
