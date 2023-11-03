@@ -25,7 +25,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site', '38.60.203.214', '127.0.0.1', '8.210.253.73']
+ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site',
+                    'aichatting.top', 'www.aichatting.top',
+                 '38.60.203.214', '127.0.0.1', '8.210.253.73']
 
 
 # 服务器端Https启用
