@@ -115,7 +115,7 @@ function previewImage(inputOrBlob) {
     reader.readAsDataURL(blob);
 }
 // GPT4 image container
-function appendToImagePreviewContainer(imagePath) {
+function appendToImagePreviewContainer(imagePath,relative_path) {
     // 创建图片容器
     const imageContainer = document.createElement('div');
     imageContainer.classList.add('image-preview-item-container');
@@ -149,6 +149,11 @@ function appendToImagePreviewContainer(imagePath) {
         if (response.ok) {
             // 如果服务器端文件删除成功，也删除前端的图片元素
             imageContainer.remove();
+            const index = uploadedImages.indexOf(relative_path);
+            if (index > -1) {
+                uploadedImages.splice(index, 1); // 删除数组中的元素
+            }
+
         } else {
             // 如果出现错误，你可能想要通知用户
             alert('文件删除失败。');
@@ -266,7 +271,7 @@ function cropAndSendImage() {
                 //alert(`图片已存储在: ${data.file_path}`);
                  // 将新的图片地址添加到数组中
                 uploadedImages.push(data.relative_path);
-                appendToImagePreviewContainer(data.file_path); // 使用上传后的图片路径更新预览容器
+                appendToImagePreviewContainer(data.file_path,data.relative_path); // 使用上传后的图片路径更新预览容器
 
                 document.querySelector('.upload-icon').classList.remove('disabled-upload');
                 modal.style.display = "none"; // 关闭模态对话框
