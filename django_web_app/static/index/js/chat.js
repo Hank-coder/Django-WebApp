@@ -11,6 +11,8 @@ const spinner = box_conversations.querySelector(".spinner");
 const stop_generating = document.querySelector(`.stop_generating`);
 const send_button = document.querySelector(`#send-button`);
 let prompt_lock = false;
+let uploadedImages = []; // 临时存储上传的图片地址
+
 // 使用此函数获取北京时间
 const beijingTime = getBeijingTime();
 
@@ -35,7 +37,6 @@ function triggerFileInput() {
     const fileInput = document.getElementById('file-input');
     fileInput.click();
 }
-
 function previewImage(inputOrBlob) {
     let blob;
 
@@ -67,21 +68,21 @@ function previewImage(inputOrBlob) {
                 const originalWidth = imageData.naturalWidth;
                 const originalHeight = imageData.naturalHeight;
 
-                // 计算裁剪框的初始尺寸（原图片尺寸的一半）
-                const cropWidth = originalWidth * 0.3;
-                const cropHeight = originalHeight * 0.3;
-
-                // 计算裁剪框的初始位置（居中）
-                const offsetX = (originalWidth - cropWidth) / 3;
-                const offsetY = (originalHeight - cropHeight) / 3;
-
-                // 设置裁剪框的尺寸和位置
-                this.cropper.setData({
-                    x: offsetX,
-                    y: offsetY,
-                    width: cropWidth,
-                    height: cropHeight
-                });
+                // // 计算裁剪框的初始尺寸（原图片尺寸的一半）
+                // const cropWidth = originalWidth * 0.3;
+                // const cropHeight = originalHeight * 0.3;
+                //
+                // // 计算裁剪框的初始位置（居中）
+                // const offsetX = (originalWidth - cropWidth) / 3;
+                // const offsetY = (originalHeight - cropHeight) / 3;
+                //
+                // // 设置裁剪框的尺寸和位置
+                // this.cropper.setData({
+                //     x: offsetX,
+                //     y: offsetY,
+                //     width: cropWidth,
+                //     height: cropHeight
+                // });
                 this.cropper.setDragMode('move');
             },
             zoom: function(event) {
@@ -113,11 +114,65 @@ function previewImage(inputOrBlob) {
 
     reader.readAsDataURL(blob);
 }
+// GPT4 image container
+function appendToImagePreviewContainer(imagePath) {
+    // 创建图片容器
+    const imageContainer = document.createElement('div');
+    imageContainer.classList.add('image-preview-item-container');
+
+    // 创建图片元素
+    const img = document.createElement('img');
+    img.src = imagePath;
+    img.alt = 'Uploaded Image';
+    img.classList.add('image-preview-item');
+
+    // 创建删除图标
+    const deleteIcon = document.createElement('span');
+    deleteIcon.classList.add('delete-icon');
+    deleteIcon.innerHTML = '&times;'; // 使用 HTML 实体 × 表示删除
+    // 删除处理
+    deleteIcon.onclick = function() {
+    // 发送删除请求到服务器的URL
+    const data = { file_path: imagePath}; // 可能需要其他标识文件的信息
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+    // 使用fetch API发送DELETE请求
+    fetch('/post/gpt4/image/delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            // 如果需要的话添加 CSRF token
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (response.ok) {
+            // 如果服务器端文件删除成功，也删除前端的图片元素
+            imageContainer.remove();
+        } else {
+            // 如果出现错误，你可能想要通知用户
+            alert('文件删除失败。');
+        }
+    })
+    .catch(error => {
+        // 处理网络错误或其他错误
+        console.error('删除文件时出现错误:', error);
+        alert('删除文件时出现错误。');
+    });
+};
+
+    // 将图片和删除图标添加到容器中
+    imageContainer.appendChild(img);
+    imageContainer.appendChild(deleteIcon);
+
+    // 获取预览容器并将新创建的图片容器添加进去
+    const container = document.getElementById('image-preview-container');
+    container.appendChild(imageContainer);
+    container.style.display = 'flex';
+}
+
 
 // 登录按钮隐藏
-
-
-
 document.addEventListener('DOMContentLoaded', async function() {
     let cloudDataButton = document.getElementById('cloudDataButton');
     let loginURL = cloudDataButton.getAttribute('data-login-url');
@@ -138,9 +193,10 @@ async function setupModelDropdown() {
 
     let modelDropdown = document.getElementById('model');
     let gpt4Option = document.querySelector('#model option[value="gpt-4"]');
-
-    if (!loggedIn && gpt4Option) {
+    let gpt4VisionOption = document.querySelector('#model option[value="gpt-4-vision-preview"]');
+    if (!loggedIn && gpt4Option && gpt4VisionOption) {
         gpt4Option.disabled = true;
+        gpt4VisionOption.disabled = true;
     }
 }
 // Call this function when the document is loaded
@@ -167,15 +223,61 @@ document.getElementById('message-input').addEventListener('paste', function(e) {
 });
 
 function cropAndSendImage() {
+    const gpt4VisionOption = document.querySelector('#model option[value="gpt-4-vision-preview"]');
     const modal = document.getElementById('loading-modal');
     const modalMessage = document.getElementById('modal-message');
     const modalClose = document.querySelector('.modal-close');
+
 
     modalClose.onclick = function() {
         modal.style.display = "none";
     }
 
-    if (cropper) {
+    if (cropper && gpt4VisionOption.selected) {
+        // 获取裁剪后的canvas
+        const canvas = cropper.getCroppedCanvas();
+        // 提交form要csrfToken
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        modal.style.display = "block"; // 显示模态对话框
+        modalMessage.textContent = "图片上传中..."; // 设置上传消息
+
+        // 将canvas转换为blob
+        canvas.toBlob(function(blob) {
+            const formData = new FormData();
+            formData.append('croppedImage', blob, 'cropped.png');
+            formData.append('conversation_id', window.conversation_id);
+
+            // 发送裁剪后的图片到后端
+            // 发送裁剪后的图片到后端
+            fetch('/post/gpt4/image', { // 替换为实际的上传URL
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+               console.log('Upload successful:', data);
+               modalMessage.textContent = "上传成功!"; // 设置成功消息
+                // 显示图片存储地址
+                //alert(`图片已存储在: ${data.file_path}`);
+                 // 将新的图片地址添加到数组中
+                uploadedImages.push(data.relative_path);
+                appendToImagePreviewContainer(data.file_path); // 使用上传后的图片路径更新预览容器
+
+                document.querySelector('.upload-icon').classList.remove('disabled-upload');
+                modal.style.display = "none"; // 关闭模态对话框
+            })
+            .catch(error => {
+                console.error('Upload failed:', error);
+                modalMessage.textContent = "上传失败"; // 设置失败消息
+                modal.style.display = "none"; // 关闭模态对话框
+            });
+        }, 'image/png');
+    }
+    else if(cropper) {
         // 获取裁剪后的canvas
         const canvas = cropper.getCroppedCanvas();
         // 提交form要csrfToken
@@ -248,7 +350,7 @@ const handle_ask = async () => {
   window.scrollTo(0, 0);
   let message = message_input.value;
 
-  if (message.length > 0) {
+  if (message.length > 0 || uploadedImages.length > 0) {
     message_input.value = ``;
     await ask_gpt(message);
   }
@@ -279,47 +381,61 @@ async function isUserLoggedIn() {
     }
 }
 
-
 const ask_gpt = async (message) => {
-  try {
-    document.querySelector('.upload-icon').classList.add('disabled-upload');
+    try {
+        document.querySelector('.upload-icon').classList.add('disabled-upload');
 
-    message_input.value = ``;
-    message_input.innerHTML = ``;
-    message_input.innerText = ``;
+        message_input.value = ``;
+        message_input.innerHTML = ``;
+        message_input.innerText = ``;
 
-    add_conversation(window.conversation_id, message.substr(0, 20));
-    window.scrollTo(0, 0);
-    window.controller = new AbortController();
+        add_conversation(window.conversation_id, message.substr(0, 20));
+        window.scrollTo(0, 0);
+        window.controller = new AbortController();
 
-    jailbreak = document.getElementById("jailbreak");
-    model = document.getElementById("model");
-    prompt_lock = true;
-    window.text = ``;
-    window.token = message_id();
+        jailbreak = document.getElementById("jailbreak");
+        model = document.getElementById("model");
+        prompt_lock = true;
+        window.text = ``;
+        window.token = message_id();
 
-    stop_generating.classList.remove(`stop_generating-hidden`);
+        stop_generating.classList.remove(`stop_generating-hidden`);
 
-    message_box.innerHTML += `
-            <div class="message">
-                <div class="user">
-                    ${user_image}
-                    <i class="fa-regular fa-phone-arrow-up-right"></i>
-                </div>
-                <div class="content" id="user_${token}"> 
-                    ${format(message)}
-                </div>
+        let imagesHtml = '';
+        // 如果 uploadedImages 数组有数据，生成图片的HTML
+        if (uploadedImages.length > 0) {
+            imagesHtml = `<div class="images-container-message">` + uploadedImages.map(imagePath => {
+                // imagePath should be a relative path
+                return `<div class="image-wrapper"><img src="/media/${imagePath}" alt="Uploaded Image" class="image-preview-message"></div>`;
+            }).join('') + `</div>`;
+        }
+
+
+        // 消息的HTML结构，包含了图片和文本内容
+        const messageHtml = `
+        <div class="message">
+            <div class="user">
+                ${user_image}
+                <i class="fa-regular fa-phone-arrow-up-right"></i>
             </div>
-        `;
+            <div class="content" id="user_${token}"> 
+                ${imagesHtml} <!-- 这里插入图片 -->
+                ${format(message)}
+            </div>
+        </div>
+    `;
 
-    /* .replace(/(?:\r\n|\r|\n)/g, '<br>') */
+        // 插入到 message_box 中
+        message_box.innerHTML += messageHtml;
 
-    message_box.scrollTop = message_box.scrollHeight;
-    window.scrollTo(0, 0);
-    await new Promise((r) => setTimeout(r, 500));
-    window.scrollTo(0, 0);
+        /* .replace(/(?:\r\n|\r|\n)/g, '<br>') */
 
-    message_box.innerHTML += `
+        message_box.scrollTop = message_box.scrollHeight;
+        window.scrollTo(0, 0);
+        await new Promise((r) => setTimeout(r, 500));
+        window.scrollTo(0, 0);
+
+        message_box.innerHTML += `
             <div class="message">
                 <div class="user">
                     ${gpt_image} <i class="fa-regular fa-phone-arrow-down-left"></i>
@@ -330,129 +446,147 @@ const ask_gpt = async (message) => {
             </div>
         `;
 
-    message_box.scrollTop = message_box.scrollHeight;
-    window.scrollTo(0, 0);
-    await new Promise((r) => setTimeout(r, 1000));
-    window.scrollTo(0, 0);
+        message_box.scrollTop = message_box.scrollHeight;
+        window.scrollTo(0, 0);
+        await new Promise((r) => setTimeout(r, 1000));
+        window.scrollTo(0, 0);
 
-    const response = await fetch(`/post/gptchat/`, {
-      method: `POST`,
-      signal: window.controller.signal,
-      headers: {
-        "content-type": `application/json`,
-        accept: `text/event-stream`,
-      },
-      body: JSON.stringify({
-        conversation_id: window.conversation_id,
-        action: `_ask`,
-        model: model.options[model.selectedIndex].value,
-        jailbreak: jailbreak.options[jailbreak.selectedIndex].value,
-        meta: {
-          id: window.token,
-          content: {
-            conversation: await get_conversation(window.conversation_id),
-            internet_access: document.getElementById("switch").checked,
-            content_type: "text",
-            parts: [
-              {
-                content: message,
-                role: "user",
-              },
-            ],
-          },
-        },
-      }),
-    });
+        const response = await fetch(`/post/gptchat/`, {
+            method: `POST`,
+            signal: window.controller.signal,
+            headers: {
+                "content-type": `application/json`,
+                accept: `text/event-stream`,
+            },
+            body: JSON.stringify({
+                conversation_id: window.conversation_id,
+                action: `_ask`,
+                model: model.options[model.selectedIndex].value,
+                jailbreak: jailbreak.options[jailbreak.selectedIndex].value,
+                meta: {
+                    id: window.token,
+                    content: {
+                        conversation: await get_conversation(window.conversation_id),
+                        internet_access: document.getElementById("switch").checked,
+                        uploaded_images: uploadedImages,
+                        content_type: "text",
+                        parts: [
+                            {
+                                content: message,
+                                role: "user",
+                            },
+                        ],
+                    },
+                },
+            }),
+        });
 
-    const reader = response.body.getReader();
+        const reader = response.body.getReader();
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+        while (true) {
+            const {value, done} = await reader.read();
+            if (done) break;
 
-      chunk = new TextDecoder().decode(value);
+            chunk = new TextDecoder().decode(value);
 
-      if (
-        chunk.includes(
-          `<form id="challenge-form" action="/backend-api/v2/conversation?`
-        )
-      ) {
-        chunk = `cloudflare token expired, please refresh the page.`;
-      }
+            if (
+                chunk.includes(
+                    `<form id="challenge-form" action="/backend-api/v2/conversation?`
+                )
+            ) {
+                chunk = `cloudflare token expired, please refresh the page.`;
+            }
 
-      text += chunk;
+            text += chunk;
 
-      // const objects         = chunk.match(/({.+?})/g);
+            // const objects         = chunk.match(/({.+?})/g);
 
-      // try { if (JSON.parse(objects[0]).success === false) throw new Error(JSON.parse(objects[0]).error) } catch (e) {}
+            // try { if (JSON.parse(objects[0]).success === false) throw new Error(JSON.parse(objects[0]).error) } catch (e) {}
 
-      // objects.forEach((object) => {
-      //     console.log(object)
-      //     try { text += h2a(JSON.parse(object).content) } catch(t) { console.log(t); throw new Error(t)}
-      // });
+            // objects.forEach((object) => {
+            //     console.log(object)
+            //     try { text += h2a(JSON.parse(object).content) } catch(t) { console.log(t); throw new Error(t)}
+            // });
 
-      document.getElementById(`gpt_${window.token}`).innerHTML =
-        markdown.render(text);
-      document.querySelectorAll(`code`).forEach((el) => {
-        hljs.highlightElement(el);
-      });
+            document.getElementById(`gpt_${window.token}`).innerHTML =
+                markdown.render(text);
+            document.querySelectorAll(`code`).forEach((el) => {
+                hljs.highlightElement(el);
+            });
 
-      window.scrollTo(0, 0);
-      message_box.scrollTo({ top: message_box.scrollHeight, behavior: "auto" });
-    }  // 流传输结束
+            window.scrollTo(0, 0);
+            message_box.scrollTo({top: message_box.scrollHeight, behavior: "auto"});
+        }  // 流传输结束
+
+        // if text contains :
+        if (
+            text.includes(
+                `instead. Maintaining this website and API costs a lot of money`
+            )
+        ) {
+            document.getElementById(`gpt_${window.token}`).innerHTML =
+                "An error occured, please reload / refresh cache and try again.";
+        }
+        // 保存信息
+        if (uploadedImages.length > 0) {
+            add_message(window.conversation_id, "user", message, uploadedImages);
+        } else {
+            add_message(window.conversation_id, "user", message);
+        }
+        //清空图片缓存
+        clearGPTImage();
+        add_message(window.conversation_id, "assistant", text);
 
 
+        //入数据库
+        message_box.scrollTop = message_box.scrollHeight;
+        await remove_cancel_button();
+        prompt_lock = false;
 
-    // if text contains :
-    if (
-      text.includes(
-        `instead. Maintaining this website and API costs a lot of money`
-      )
-    ) {
-      document.getElementById(`gpt_${window.token}`).innerHTML =
-        "An error occured, please reload / refresh cache and try again.";
+        await load_conversations(20, 0);
+        window.scrollTo(0, 0);
+        document.querySelector('.upload-icon').classList.remove('disabled-upload'); // 启用按钮
+
+    } catch (e) {
+        add_message(window.conversation_id, "user", message);
+
+        message_box.scrollTop = message_box.scrollHeight;
+        await remove_cancel_button();
+        prompt_lock = false;
+
+        await load_conversations(20, 0);
+
+        console.log(e);
+
+        let cursorDiv = document.getElementById(`cursor`);
+        if (cursorDiv) cursorDiv.parentNode.removeChild(cursorDiv);
+
+        if (e.name != `AbortError`) {
+            let error_message = `oops ! something went wrong, please try again / reload. [stacktrace in console]`;
+
+            document.getElementById(`gpt_${window.token}`).innerHTML = error_message;
+            add_message(window.conversation_id, "assistant", error_message);
+        } else {
+            document.getElementById(`gpt_${window.token}`).innerHTML += ` [终止对话 aborted]`;
+            add_message(window.conversation_id, "assistant", text + ` [终止对话  aborted]`);
+        }
+
+        window.scrollTo(0, 0);
+        document.querySelector('.upload-icon').classList.remove('disabled-upload'); // 启用按钮
     }
-
-    add_message(window.conversation_id, "user", message);
-    add_message(window.conversation_id, "assistant", text);
-
-    //入数据库
-
-    message_box.scrollTop = message_box.scrollHeight;
-    await remove_cancel_button();
-    prompt_lock = false;
-
-    await load_conversations(20, 0);
-    window.scrollTo(0, 0);
-    document.querySelector('.upload-icon').classList.remove('disabled-upload'); // 启用按钮
-  } catch (e) {
-    add_message(window.conversation_id, "user", message);
-
-    message_box.scrollTop = message_box.scrollHeight;
-    await remove_cancel_button();
-    prompt_lock = false;
-
-    await load_conversations(20, 0);
-
-    console.log(e);
-
-    let cursorDiv = document.getElementById(`cursor`);
-    if (cursorDiv) cursorDiv.parentNode.removeChild(cursorDiv);
-
-    if (e.name != `AbortError`) {
-      let error_message = `oops ! something went wrong, please try again / reload. [stacktrace in console]`;
-
-      document.getElementById(`gpt_${window.token}`).innerHTML = error_message;
-      add_message(window.conversation_id, "assistant", error_message);
-    } else {
-      document.getElementById(`gpt_${window.token}`).innerHTML += ` [终止对话 aborted]`;
-      add_message(window.conversation_id, "assistant", text + ` [终止对话  aborted]`);
-    }
-
-    window.scrollTo(0, 0);
-    document.querySelector('.upload-icon').classList.remove('disabled-upload'); // 启用按钮
-  }
 }; // end ask_gpt
+
+function clearGPTImage()
+{
+    //清空图片缓存
+    uploadedImages = [];
+    const container = document.getElementById('image-preview-container');
+    // 清空容器内部的HTML
+    container.innerHTML = '';
+    // 隐藏容器
+    container.style.display = 'none';
+}
+
 const clear_conversations = async () => {
   const elements = box_conversations.childNodes;
   let index = elements.length;
@@ -555,8 +689,10 @@ const new_conversation = async () => {
   // history.pushState({}, null, `/chat/`);
   window.conversation_id = uuid();
 
+  clearGPTImage();
   await clear_conversation();
   await load_conversations(20, 0, true);
+
 };
 
 const load_conversation = async (conversation_id) => {
@@ -581,27 +717,50 @@ const load_conversation = async (conversation_id) => {
         `;
     }
 
-  for (item of conversation.items) {
+    for (const item of conversation.items) {
+         // Start with an empty string for images
+      let imagesHtml = '';
+
+      // Check if imageUrl is a string and not an empty array representation
+      if (typeof item.imageUrl === 'string' && item.imageUrl !== '') {
+        // Replace single quotes with double quotes to prepare for parsing
+        const correctedImageUrlString = item.imageUrl.replace(/'/g, '"');
+        // Parse the string to an actual array
+        item.imageUrl = JSON.parse(correctedImageUrlString);
+      }
+
+      // Now check if there are imageUrls after converting and create image elements
+      if (Array.isArray(item.imageUrl) && item.imageUrl.length > 0) {
+        imagesHtml = `<div class="images-container-message">` + item.imageUrl.map(imagePath => {
+          // Ensure imagePath is a relative path
+          return `<div class="image-wrapper"><img src="/media/${imagePath}" alt="Uploaded Image" class="image-preview-message"></div>`;
+        }).join('') + `</div>`;
+      }
+
+    // Append message HTML with or without images
     message_box.innerHTML += `
-            <div class="message">
-                <div class="user">
-                    ${item.role == "assistant" ? gpt_image : user_image}
-                    ${
-                      item.role == "assistant"
-                        ? `<i class="fa-regular fa-phone-arrow-down-left"></i>`
-                        : `<i class="fa-regular fa-phone-arrow-up-right"></i>`
-                    }
-                </div>
-                <div class="content">
-                    ${
-                      item.role == "assistant"
-                        ? markdown.render(item.content)
-                        : item.content
-                    }
-                </div>
+        <div class="message">
+            <div class="user">
+                ${item.role == "assistant" ? gpt_image : user_image}
+                ${
+                  item.role == "assistant"
+                    ? `<i class="fa-regular fa-phone-arrow-down-left"></i>`
+                    : `<i class="fa-regular fa-phone-arrow-up-right"></i>`
+                }
+                
             </div>
-        `;
-  }
+            <div class="content">
+                ${imagesHtml} <!-- Place images above the text content -->
+                ${
+                  item.role == "assistant"
+                    ? markdown.render(item.content)
+                    : item.content
+                }
+            </div>
+        </div>
+    `;
+}
+
 
 
   document.querySelectorAll(`code`).forEach((el) => {
@@ -635,26 +794,33 @@ const add_conversation = async (conversation_id, title) => {
   }
 };
 // 后端add_conversation 和 add_message 合并
-const add_message = async (conversation_id, role, content) => {
-  before_adding = JSON.parse(
-    localStorage.getItem(`conversation:${conversation_id}`)
-  );
+const add_message = async (conversation_id, role, content, imageUrls = []) => {
+  // Fetch the existing conversation from local storage
+  let conversation = JSON.parse(localStorage.getItem(`conversation:${conversation_id}`));
+  //alert(imageUrls)
+  // Create a new message object
+const newMessage = {
+  role: role,
+  content: content,
+  // Only add imageUrl if it's not an empty array, otherwise omit it or set it to null
+  ...(imageUrls.length > 0 && { imageUrl: imageUrls })
+}; //The spread operator ... is used with a conditional expression.
 
-  before_adding.items.push({
-    role: role,
-    content: content,
-  });
+  // Push the new message to the conversation items array
+  conversation.items.push(newMessage);
 
-  localStorage.setItem(
-    `conversation:${conversation_id}`,
-    JSON.stringify(before_adding)
-  ); // update conversation
+  // Save the updated conversation back to local storage
+  localStorage.setItem(`conversation:${conversation_id}`, JSON.stringify(conversation));
 
-     // Save to the database
-  await save_message_to_db(conversation_id, role, content);
+  // Save to the database
+  // Ensure your save_message_to_db function can handle the array of imageUrls
+  await save_message_to_db(conversation_id, role, content,imageUrls);
 };
 
-async function save_message_to_db(conversation_id, sender, content) {
+
+
+
+async function save_message_to_db(conversation_id, sender, content,imageUrls=[]) {
     if (await isUserLoggedIn()) { // 确认用户已登录
         // 获取令牌
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
@@ -668,10 +834,12 @@ async function save_message_to_db(conversation_id, sender, content) {
             body: JSON.stringify({
                 conversation_id: conversation_id,
                 role: sender,
-                content: content
+                content: content,
+                imageUrl: imageUrls,
             })
         });
-        //localStorage.setItem('last_updated', getBeijingTime());
+
+        localStorage.setItem('last_updated', getBeijingTime());
         return response.json();
     } else {
         console.log('User not logged in. Message not saved.');
@@ -717,7 +885,8 @@ const load_conversations = async (limit, offset, loader) => {
         }
       }
     }
-  } else {
+  }
+  else {
     // If the user is not authenticated, only use locally stored conversations
     for (let i = 0; i < localStorage.length; i++) {
       if (localStorage.key(i).startsWith("conversation:")) {
@@ -746,8 +915,6 @@ const load_conversations = async (limit, offset, loader) => {
     hljs.highlightElement(el);
   });
 };
-
-
 
 document.getElementById(`cancelButton`).addEventListener(`click`, async () => {
   window.controller.abort();

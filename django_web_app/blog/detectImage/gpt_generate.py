@@ -5,7 +5,7 @@ from .utils import get_apikey
 import requests
 import os
 from django.conf import settings
-
+from openai import OpenAI
 # Set the API base URL and key (ensure these values are stored securely)
 
 get_apikey(openai)
@@ -161,14 +161,18 @@ def generate_corrected_text(temperature, text_info, combined_request):
     }
 
 
-def generate_image(prompt, username, size='1024x1024'):
+def generate_image(prompt, username, size="1024x1024"):
     # 使用OpenAI API生成图像
-    response = openai.Image.create(
+    client = OpenAI()
+    response = client.images.generate(
+        model="dall-e-3",
         prompt=prompt,
+        size="1024x1024",
+        quality="standard",
         n=1,
-        size=size
     )
-    image_url = response['data'][0]['url']
+
+    image_url = response.data[0].url
 
     # 从URL下载图像
     image_response = requests.get(image_url, stream=True)

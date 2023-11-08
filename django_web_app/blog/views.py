@@ -1,5 +1,8 @@
+import base64
 import json
 import re
+import shutil
+from urllib.parse import unquote
 
 import openai
 from django.contrib.auth.decorators import login_required
@@ -299,11 +302,41 @@ class GPTChatCreateView(CreateView):
             jailbreak = body_data['jailbreak']
             internet_access = body_data['meta']['content']['internet_access']
             _conversation = body_data['meta']['content']['conversation']
+
+            # 删除掉imageUrl再上传api 因为imageUrl是我自定义的数组 并修改成openai格式
+            # _conversation = [{key: value for key, value in message.items() if key != 'imageUrl'} for message in
+            #                  _conversation]
+            for message in _conversation:
+                # Check if 'imageUrl' key exists and if it's a list with at least one image
+                if 'imageUrl' in message and isinstance(message['imageUrl'], list) and message['imageUrl']:
+                    # Initialize a content list with the existing text content
+                    content_list = [{"type": "text", "text": message['content']}]
+
+                    # Convert all images in imageUrl list to base64 and add them to content list
+                    for image_path in message['imageUrl']:
+                        # Ensure the path is correctly formatted for your OS
+                        image_path = os.path.join(settings.MEDIA_ROOT, image_path)
+                        base64_image = self.encode_image(image_path)
+                        image_dict = {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}"
+                            }
+                        }
+                        content_list.append(image_dict)
+
+                    # Replace the 'content' key with the new content list
+                    message['content'] = content_list
+                    # Remove the original 'imageUrl' key
+                    del message['imageUrl']
+            # print(_conversation)
+
+
             prompt = body_data['meta']['content']['parts'][0]
             current_date = datetime.now().strftime("%Y-%m-%d")
             system_message = f'You are ChatGPT also known as ChatGPT, a large language model trained by OpenAI. ' \
                              f'Strictly follow the users instructions.' \
-                             f' Knowledge cutoff: 2021-09-01 Current date: {current_date}'
+                             f' Current date: {current_date}'
 
             extra = []
             query_content = prompt["content"]  # 假设 prompt 已经定义
@@ -314,11 +347,26 @@ class GPTChatCreateView(CreateView):
             conversation = [{'role': 'system', 'content': system_message}] + \
                            extra + special_instructions[jailbreak] + \
                            _conversation + [prompt]
-            # print(conversation)
+
+            # Check if the model is for vision and images have been uploaded
+            if body_data['model'] == 'gpt-4-vision-preview':
+                uploaded_images = body_data['meta']['content']['uploaded_images']
+                if uploaded_images:
+                    # Create vision messages for the uploaded images
+                    vision_messages = self.create_vision_messages(uploaded_images=uploaded_images)
+                    # Append the vision messages to the conversation
+                    conversation = [vision_messages] + \
+                                   extra + special_instructions[jailbreak] + \
+                                   _conversation + [prompt]
+
             url = f"{self.openai_api_base}/v1/chat/completions"
 
-            if body_data['model'] == 'gpt-4' and (not request.user.is_authenticated or not request.user.is_staff):
+            if body_data['model'] == 'gpt-4' and (not request.user.is_authenticated):
                 body_data['model'] = 'gpt-3.5-turbo'
+
+            # 定义版本 gpt-4 turbo
+            if body_data['model'] == 'gpt-4':
+                body_data['model'] = 'gpt-4-1106-preview'
 
             print(body_data['model'])
             # 给openai发送请求
@@ -330,7 +378,8 @@ class GPTChatCreateView(CreateView):
                 json={
                     'model': body_data['model'],
                     'messages': conversation,
-                    'stream': True
+                    'stream': True,
+                    "max_tokens": 2000
                 },
                 stream=True
             )
@@ -372,6 +421,34 @@ class GPTChatCreateView(CreateView):
                 'error': f'an error occurred {str(e)}'
             }, status=400)
 
+    @staticmethod
+    def encode_image(image_path):
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode('utf-8')
+
+    def create_vision_messages(self, uploaded_images):
+        # Start with the text prompt
+        message_content = [{"type": "text", "text": 'User provide the following images,'
+                                                    'strictly follow the users instructions below.'}]
+
+        # Add each image to the message content
+        for image_path in uploaded_images:
+            full_path = os.path.join(settings.MEDIA_ROOT, image_path)
+            image_data = self.encode_image(full_path)
+            image_content = {
+                "type": "image_url",
+                "image_url": f"data:image/png;base64,{image_data}"
+            }
+            message_content.append(image_content)
+
+        # Create a single message with all contents
+        vision_message = {
+            "role": "user",
+            "content": message_content,
+        }
+
+        return vision_message
+
 
 # 入库
 class SaveChat(LoginRequiredMixin, CreateView):
@@ -385,7 +462,7 @@ class SaveChat(LoginRequiredMixin, CreateView):
             conversation_id = data.get('conversation_id')
             role = data.get('role')
             content = data.get('content')
-
+            imageUrl = data.get('imageUrl')
             # 确保对话存在
             conversation, created = Conversation.objects.get_or_create(
                 user=user,
@@ -401,7 +478,8 @@ class SaveChat(LoginRequiredMixin, CreateView):
                 conversation=conversation,
                 role=role,
                 content=content,
-                timestamp=timezone.now()
+                timestamp=timezone.now(),
+                imageUrl=imageUrl,
             )
 
             return JsonResponse({'status': 'success', 'message': 'Message saved successfully'})
@@ -422,7 +500,7 @@ class LoadChat(LoginRequiredMixin, CreateView):
         last_updated = None
 
         for conversation in conversations_query:
-            chat_messages = conversation.chatmessage_set.all().values('role', 'content')
+            chat_messages = conversation.chatmessage_set.all().values('role', 'content', 'imageUrl')
             conversations.append({
                 'id': conversation.conversation_id,
                 'title': conversation.title,
@@ -445,6 +523,12 @@ class DeleteChat(LoginRequiredMixin, CreateView):
             conversation = Conversation.objects.filter(conversation_id=conversation_id, user=request.user).first()
             if conversation:
                 conversation.delete()
+
+            # 删除本地图片文件夹
+            relative_path = os.path.join('uploaded_gpt4_images', request.user.username, conversation_id)
+            save_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+            if os.path.isdir(save_path):  # 检查是否是一个目录
+                shutil.rmtree(save_path)  # 删除文件夹及其所有内容
 
             return JsonResponse({'status': 'success', 'message': 'Conversation deleted successfully.'})
 
@@ -527,6 +611,75 @@ class GPTImageView(CreateView):
 
         else:
             return JsonResponse({'status': 'error', 'message': 'Image upload failed!'}, status=400)
+
+
+class GPT4ImageView(LoginRequiredMixin, CreateView):
+
+    def post(self, request, *args, **kwargs):
+        uploaded_image = request.FILES.get('croppedImage')
+        conversation_id = request.POST.get('conversation_id')
+        user = request.user
+        # 确保对话存在
+        conversation, created = Conversation.objects.get_or_create(
+            user=user,
+            conversation_id=conversation_id,
+        )
+        # 如果对话是新创建的，可以添加标题
+        conversation.title = '输入图片'
+        conversation.save()
+        if uploaded_image:
+            # 创建一个文件名
+            filename = '{}.png'.format(datetime.now().strftime('%Y%m%d%H%M%S%f'))
+
+            # 定义保存路径
+            relative_path = os.path.join('uploaded_gpt4_images', user.username, conversation_id, filename)
+            save_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+
+            # 确保目录存在
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+            # 保存文件
+            with open(save_path, 'wb+') as destination:
+                for chunk in uploaded_image.chunks():
+                    destination.write(chunk)
+
+            # 这里我们不再提取图像中的文本，而是返回图像的保存路径
+            # 构建用于访问文件的URL
+            file_url = request.build_absolute_uri(settings.MEDIA_URL + relative_path)
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Image saved successfully!',
+                'file_path': file_url,  # 返回文件的URL,
+                'relative_path': relative_path
+            })
+
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Image upload failed!'}, status=400)
+
+
+class DeleteGPT4Image(LoginRequiredMixin, DeleteView):
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            file_url = data.get('file_path')
+
+            if not file_url:
+                return JsonResponse({'status': 'error', 'message': 'No file path provided'}, status=400)
+
+            # URL解码
+            file_path = unquote(file_url)
+            # 移除MEDIA_URL和之前的所有内容
+            relative_path = file_path.split(settings.MEDIA_URL)[-1]
+            save_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+            if os.path.isfile(save_path):
+                os.remove(save_path)
+                return JsonResponse({'status': 'success'}, status=204)  # 204 No Content
+            else:
+                return JsonResponse({'status': 'file_not_found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
 def clean_text(text):

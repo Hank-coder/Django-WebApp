@@ -816,3 +816,57 @@ a:-webkit-any-link {
     --colour-3: hsl(209 50% 90%);
     --conversations: hsl(209 50% 80%);
 }
+
+/* 图片预览容器的样式 */
+#image-preview-container {
+    position: fixed; /* 固定位置 */
+    left: 20px; /* 与左侧边缘的距离 */
+    bottom: 100px; /* 与底部边缘的距离 */
+    max-width: 260px;
+    display: flex; /* 使用Flexbox布局 */
+    flex-wrap: wrap; /* 允许内容换行 */
+    align-items: flex-start; /* 对齐到容器的顶部 */
+    gap: 10px; /* 图片之间的间隙 */
+    z-index: 1000; /* 确保在最上层 */
+    background: transparent;
+    border-radius: var(--border-radius-1);
+    cursor: default;
+    border: 1px dashed var(--conversations)
+}
+
+
+/* 单个图片预览的样式 */
+.image-preview-item {
+    width: 100px;   /* 设置图片宽度 */
+    height: 100px;  /* 设置图片高度 */
+    object-fit: cover; /* 裁剪图片以填充容器 */
+    margin: 4px; /* 为图片添加一些外边距 */
+}
+
+.delete-icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: rgba(255, 0, 0, 0.7); /* 红色背景，增加透明度 */
+    color: white;
+    cursor: pointer; /* 显示手形光标 */
+    padding: 4px; /* 删除图标的填充 */
+}
+
+.images-container-message {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Adjust the gap as needed */
+}
+
+.image-wrapper {
+    flex: 0 0 auto; /* Do not grow or shrink */
+}
+
+/* 单个图片预览的样式 */
+.image-preview-message {
+    width: 200px;   /* 设置图片宽度 */
+    height: 130px;  /* 设置图片高度 */
+    object-fit: cover; /* 裁剪图片以填充容器 */
+    margin: 4px; /* 为图片添加一些外边距 */
+}

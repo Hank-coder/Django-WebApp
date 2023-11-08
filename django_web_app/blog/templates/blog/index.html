@@ -65,7 +65,7 @@
             #back-to-home {
                 position: fixed;
                 bottom: 10px;
-                left: 10px;
+                right: 10px;
                 padding: 5px 10px;
                 background-color: #3b5998; /* 或者你喜欢的任何颜色 */
                 color: white;
@@ -218,6 +218,8 @@
                         <img id="image-preview" src="" alt="Preview">
                     </div>
                 </div>
+                <!-- 图片预览容器 -->
+                <div id="image-preview-container" style="display:none;"></div>
                 <!-- Loading Modal -->
                 <div id="loading-modal" class="modal">
                     <div class="modal-content">
@@ -225,10 +227,10 @@
                         <p id="modal-message">上传图片...</p>
                     </div>
                 </div>
-                <div class="user-input">
+               <div class="user-input">
                     <div class="box input-box">
                         <!-- 新增的图片上传按钮 -->
-                        <img src="{% static 'index/img/upload.png' %}" alt="Upload" width="24" class="upload-icon" onclick="triggerFileInput();">
+                        <img src="{% static 'index/img/upload.png' %}" alt="Upload" width="24" class="upload-icon" onclick="triggerFileInput();" />
                         <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="previewImage(this)" />
 
                         <textarea id="message-input" placeholder="请输入您的问题 如需要进行图片文字识别，请点击左侧按钮或直接粘贴图片" cols="30" rows="10" style="white-space: pre-wrap;" oninput="resizeTextarea(this)"></textarea>
@@ -248,6 +250,7 @@
                         <select name="model" id="model">
                             <option value="gpt-3.5-turbo" selected>gpt-3.5-turbo</option>
                             <option value="gpt-4">gpt-4</option>
+                            <option value="gpt-4-vision-preview">gpt-4-vision-preview</option>
                         </select>
                         <!-- <span class="about">Model</span> -->
                     </div>

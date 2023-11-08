@@ -7,7 +7,7 @@ from .views import (
     PostDeleteView,
     UserPostListView,
     GPTAudioCreateView, GPTAudioUpdateView, ImageCreateView, GPTChatCreateView, GPTImageView, SaveChat, LoadChat,
-    DeleteChat,
+    DeleteChat, GPT4ImageView, DeleteGPT4Image,
 )
 from . import views
 
@@ -21,6 +21,8 @@ urlpatterns = [
     path('post/loadchat/', LoadChat.as_view(), name='load-chat'),
     path('post/deletechat/', DeleteChat.as_view(), name='delete-chat'),
     path('post/gptchat/image', GPTImageView.as_view(), name='gpt-image'),
+    path('post/gpt4/image', GPT4ImageView.as_view(), name='gpt4-image'),
+    path('post/gpt4/image/delete', DeleteGPT4Image.as_view(), name='gpt4-image-delete'),
 
     path('user/<str:username>', UserPostListView.as_view(), name='user-posts'),
     path('post/<int:pk>/', PostDetailView.as_view(), name='post-detail'),

@@ -109,4 +109,5 @@ class ChatMessage(models.Model):
     role = models.CharField(max_length=20)  # 角色，例如'sender', 'receiver'等
     content = models.TextField()  # 消息内容
     timestamp = models.DateTimeField(auto_now_add=True)  # 记录消息的发送时间
+    imageUrl = models.CharField(max_length=255, default="")
 
