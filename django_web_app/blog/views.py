@@ -43,7 +43,8 @@ from django.db.models import Q
 from django.contrib import messages
 from django import forms
 from .models import Post
-
+from PIL import Image
+import io
 
 def home(request):
     context = {
@@ -331,7 +332,6 @@ class GPTChatCreateView(CreateView):
                     del message['imageUrl']
             # print(_conversation)
 
-
             prompt = body_data['meta']['content']['parts'][0]
             current_date = datetime.now().strftime("%Y-%m-%d")
             system_message = f'You are ChatGPT also known as ChatGPT, a large language model trained by OpenAI. ' \
@@ -355,10 +355,10 @@ class GPTChatCreateView(CreateView):
                     # Create vision messages for the uploaded images
                     vision_messages = self.create_vision_messages(uploaded_images=uploaded_images)
                     # Append the vision messages to the conversation
-                    conversation = [vision_messages] + \
+                    conversation = [vision_messages] + [prompt] + \
                                    extra + special_instructions[jailbreak] + \
-                                   _conversation + [prompt]
-
+                                   _conversation
+            # print(conversation)
             url = f"{self.openai_api_base}/v1/chat/completions"
 
             if body_data['model'] == 'gpt-4' and (not request.user.is_authenticated):
@@ -580,7 +580,7 @@ class GPTImageView(CreateView):
         uploaded_image = request.FILES.get('croppedImage')
         if uploaded_image:
             # 创建一个文件名
-            filename = '{}.png'.format(datetime.now().strftime('%Y%m%d%H%M%S%f'))
+            filename = '{}.jpeg'.format(datetime.now().strftime('%Y%m%d%H%M%S%f'))
 
             # 定义保存路径
             save_path = os.path.join(settings.MEDIA_ROOT, 'uploaded_chat_images', filename)
@@ -628,29 +628,45 @@ class GPT4ImageView(LoginRequiredMixin, CreateView):
         conversation.title = '输入图片'
         conversation.save()
         if uploaded_image:
-            # 创建一个文件名
-            filename = '{}.png'.format(datetime.now().strftime('%Y%m%d%H%M%S%f'))
+            # Read the uploaded image file
+            img = Image.open(uploaded_image)
 
-            # 定义保存路径
+            # Define the maximum size in KB
+            max_size = 1024
+
+            # Convert to RGB (in case it's a different mode and if the image format allows it)
+            if img.mode in ("RGBA", "P"):  # Adjust based on your requirements
+                img = img.convert('RGB')
+
+            # Adjust the quality until the file is below the maximum size
+            quality = 95  # Start with a high quality value
+            img_io = io.BytesIO()
+            while quality > 10:
+                img_io.seek(0)  # Reset file pointer to the beginning.
+                img.save(img_io, format='JPEG', quality=quality)
+                # Check the size without closing BytesIO
+                if img_io.tell() <= max_size * 1024:
+                    break
+                quality -= 5  # Decrease quality
+
+            # Reset the file pointer before saving to disk
+            img_io.seek(0)
+
+            # Save the processed image to the file system
+            filename = '{}.jpeg'.format(datetime.now().strftime('%Y%m%d%H%M%S%f'))
             relative_path = os.path.join('uploaded_gpt4_images', user.username, conversation_id, filename)
             save_path = os.path.join(settings.MEDIA_ROOT, relative_path)
-
-            # 确保目录存在
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-            # 保存文件
-            with open(save_path, 'wb+') as destination:
-                for chunk in uploaded_image.chunks():
-                    destination.write(chunk)
+            with open(save_path, 'wb') as destination:
+                destination.write(img_io.getvalue())
 
-            # 这里我们不再提取图像中的文本，而是返回图像的保存路径
-            # 构建用于访问文件的URL
             file_url = request.build_absolute_uri(settings.MEDIA_URL + relative_path)
 
             return JsonResponse({
                 'status': 'success',
                 'message': 'Image saved successfully!',
-                'file_path': file_url,  # 返回文件的URL,
+                'file_path': file_url,
                 'relative_path': relative_path
             })
 

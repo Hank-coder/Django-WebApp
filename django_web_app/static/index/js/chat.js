@@ -228,6 +228,7 @@ function cropAndSendImage() {
     const modalMessage = document.getElementById('modal-message');
     const modalClose = document.querySelector('.modal-close');
 
+    const MAX_SIZE = 1 * 1024 * 1024; // 图片最大1MB
 
     modalClose.onclick = function() {
         modal.style.display = "none";
@@ -275,7 +276,7 @@ function cropAndSendImage() {
                 modalMessage.textContent = "上传失败"; // 设置失败消息
                 modal.style.display = "none"; // 关闭模态对话框
             });
-        }, 'image/png');
+        }, 'image/jpeg',0.7);
     }
     else if(cropper) {
         // 获取裁剪后的canvas
@@ -317,7 +318,7 @@ function cropAndSendImage() {
                 modalMessage.textContent = "文本识别识别"; // 设置失败消息
                 modal.style.display = "none"; // 显示模态对话框
             });
-        }, 'image/png');
+        }, 'image/jpeg',0.7);
     }
 }
 
@@ -799,12 +800,12 @@ const add_message = async (conversation_id, role, content, imageUrls = []) => {
   let conversation = JSON.parse(localStorage.getItem(`conversation:${conversation_id}`));
   //alert(imageUrls)
   // Create a new message object
-const newMessage = {
-  role: role,
-  content: content,
-  // Only add imageUrl if it's not an empty array, otherwise omit it or set it to null
-  ...(imageUrls.length > 0 && { imageUrl: imageUrls })
-}; //The spread operator ... is used with a conditional expression.
+    const newMessage = {
+      role: role,
+      content: content,
+      // Only add imageUrl if it's not an empty array, otherwise omit it or set it to null
+      ...(imageUrls.length > 0 && { imageUrl: imageUrls })
+    }; //The spread operator ... is used with a conditional expression.
 
   // Push the new message to the conversation items array
   conversation.items.push(newMessage);
