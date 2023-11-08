@@ -639,15 +639,15 @@ class GPT4ImageView(LoginRequiredMixin, CreateView):
                 img = img.convert('RGB')
 
             # Adjust the quality until the file is below the maximum size
-            quality = 95  # Start with a high quality value
+            quality = 70  # Start with a quality value
             img_io = io.BytesIO()
-            while quality > 10:
+            while quality > 3:  # min quality
                 img_io.seek(0)  # Reset file pointer to the beginning.
                 img.save(img_io, format='JPEG', quality=quality)
                 # Check the size without closing BytesIO
                 if img_io.tell() <= max_size * 1024:
                     break
-                quality -= 5  # Decrease quality
+                quality -= 1  # Decrease quality
 
             # Reset the file pointer before saving to disk
             img_io.seek(0)
