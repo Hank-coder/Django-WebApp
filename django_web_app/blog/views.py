@@ -632,7 +632,7 @@ class GPT4ImageView(LoginRequiredMixin, CreateView):
             img = Image.open(uploaded_image)
 
             # Define the maximum size in KB
-            max_size = 1024
+            max_size = 512
 
             # Convert to RGB (in case it's a different mode and if the image format allows it)
             if img.mode in ("RGBA", "P"):  # Adjust based on your requirements
