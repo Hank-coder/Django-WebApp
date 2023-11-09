@@ -303,33 +303,38 @@ class GPTChatCreateView(CreateView):
             jailbreak = body_data['jailbreak']
             internet_access = body_data['meta']['content']['internet_access']
             _conversation = body_data['meta']['content']['conversation']
-
+            model_type = body_data.get('model')
             # 删除掉imageUrl再上传api 因为imageUrl是我自定义的数组 并修改成openai格式
             # _conversation = [{key: value for key, value in message.items() if key != 'imageUrl'} for message in
             #                  _conversation]
-            for message in _conversation:
-                # Check if 'imageUrl' key exists and if it's a list with at least one image
-                if 'imageUrl' in message and isinstance(message['imageUrl'], list) and message['imageUrl']:
-                    # Initialize a content list with the existing text content
-                    content_list = [{"type": "text", "text": message['content']}]
+            # 检查模型是否为 gpt-4-vision 来决定是否处理 imageUrl
+            if body_data['model'] == 'gpt-4-vision-preview':
+                for message in _conversation:
+                    # 如果存在 imageUrl 键，且为非空列表
+                    if 'imageUrl' in message and isinstance(message['imageUrl'], list) and message['imageUrl']:
+                        content_list = [{"type": "text", "text": message['content']}]
 
-                    # Convert all images in imageUrl list to base64 and add them to content list
-                    for image_path in message['imageUrl']:
-                        # Ensure the path is correctly formatted for your OS
-                        image_path = os.path.join(settings.MEDIA_ROOT, image_path)
-                        base64_image = self.encode_image(image_path)
-                        image_dict = {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
+                        for image_path in message['imageUrl']:
+                            # 确保路径格式正确
+                            image_path = os.path.join(settings.MEDIA_ROOT, image_path)
+                            base64_image = self.encode_image(image_path)
+                            image_dict = {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}"
+                                }
                             }
-                        }
-                        content_list.append(image_dict)
+                            content_list.append(image_dict)
 
-                    # Replace the 'content' key with the new content list
-                    message['content'] = content_list
-                    # Remove the original 'imageUrl' key
-                    del message['imageUrl']
+                        message['content'] = content_list
+                        del message['imageUrl']
+
+            else:
+                # 如果模型是 gpt-4 或 gpt-3.5-turbo, 移除所有 imageUrl 键
+                for message in _conversation:
+                    if 'imageUrl' in message:
+                        del message['imageUrl']
+
             # print(_conversation)
 
             prompt = body_data['meta']['content']['parts'][0]
