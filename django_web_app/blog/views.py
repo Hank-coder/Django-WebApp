@@ -46,6 +46,7 @@ from .models import Post
 from PIL import Image
 import io
 
+
 def home(request):
     context = {
         'posts': Post.objects.all()
@@ -215,7 +216,7 @@ class GPTAudioCreateView(LoginRequiredMixin, CreateView):
                 data_strings = [req_record.request for req_record in records]
                 # 将所有的数据连接成一个字符串
                 combined_request = ' '.join(data_strings)
-            print(combined_request)
+            # print(combined_request)
 
             response_data = gpt_audio_response(audio_file, self.request.user, combined_request)
             user_transcript = clean_text(response_data.get('user_transcript'))
@@ -283,6 +284,21 @@ class GPTAudioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return True
 
 
+def convert_string_to_list(image_url_str):
+    # 将单引号替换为双引号
+    corrected_str = image_url_str.replace("'", '"')
+    try:
+        # 尝试将修正后的字符串转换为列表
+        image_list = json.loads(corrected_str)
+        # 确保结果是列表
+        if isinstance(image_list, list):
+            return image_list
+    except json.JSONDecodeError:
+        # 如果转换失败，记录错误或进行一些错误处理
+        print("Error: imageUrl is not a valid list in JSON format after correction.")
+        return None
+
+
 # 不登陆也能访问
 class GPTChatCreateView(CreateView):
     model = PostAudio
@@ -310,24 +326,31 @@ class GPTChatCreateView(CreateView):
             # 检查模型是否为 gpt-4-vision 来决定是否处理 imageUrl
             if body_data['model'] == 'gpt-4-vision-preview':
                 for message in _conversation:
-                    # 如果存在 imageUrl 键，且为非空列表
-                    if 'imageUrl' in message and isinstance(message['imageUrl'], list) and message['imageUrl']:
-                        content_list = [{"type": "text", "text": message['content']}]
+                    if 'imageUrl' in message:
+                        if isinstance(message['imageUrl'], str):
+                            # 尝试转换字符串表示的列表
+                            image_list = convert_string_to_list(message['imageUrl'])
+                            if image_list is not None:
+                                message['imageUrl'] = image_list
 
-                        for image_path in message['imageUrl']:
-                            # 确保路径格式正确
-                            image_path = os.path.join(settings.MEDIA_ROOT, image_path)
-                            base64_image = self.encode_image(image_path)
-                            image_dict = {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{base64_image}"
+                        # 继续处理，如果它现在是一个列表
+                        if isinstance(message['imageUrl'], list) and message['imageUrl']:
+                            content_list = [{"type": "text", "text": message['content']}]
+
+                            for image_path in message['imageUrl']:
+                                # 确保路径格式正确
+                                image_path = os.path.join(settings.MEDIA_ROOT, image_path.strip())
+                                base64_image = self.encode_image(image_path)
+                                image_dict = {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/jpeg;base64,{base64_image}"
+                                    }
                                 }
-                            }
-                            content_list.append(image_dict)
+                                content_list.append(image_dict)
 
-                        message['content'] = content_list
-                        del message['imageUrl']
+                            message['content'] = content_list
+                            del message['imageUrl']
 
             else:
                 # 如果模型是 gpt-4 或 gpt-3.5-turbo, 移除所有 imageUrl 键
@@ -335,7 +358,7 @@ class GPTChatCreateView(CreateView):
                     if 'imageUrl' in message:
                         del message['imageUrl']
 
-            # print(_conversation)
+            # print(_conversation) // 测试有用
 
             prompt = body_data['meta']['content']['parts'][0]
             current_date = datetime.now().strftime("%Y-%m-%d")
@@ -506,11 +529,34 @@ class LoadChat(LoginRequiredMixin, CreateView):
 
         for conversation in conversations_query:
             chat_messages = conversation.chatmessage_set.all().values('role', 'content', 'imageUrl')
+            # 初始化对话列表
+            conversation_items = []
+
+            for message in chat_messages:
+                # 如果imageUrl存在且不是'[]'，则将其添加到信息中
+                if message['imageUrl'] and message['imageUrl'] != '[]':
+                    # 可以进一步转换或处理imageUrl字段
+                    # 例如：转换字符串格式的列表为Python列表
+                    conversation_items.append({
+                        'role': message['role'],
+                        'content': message['content'],
+                        'imageUrl': message['imageUrl']  # 假设这是一个有效的列表或非空字符串
+                    })
+                else:
+                    # 不包含imageUrl的信息
+                    conversation_items.append({
+                        'role': message['role'],
+                        'content': message['content']
+                        # 不添加imageUrl字段
+                    })
+
+            # 添加对话到对话列表中
             conversations.append({
                 'id': conversation.conversation_id,
                 'title': conversation.title,
-                'items': list(chat_messages),
+                'items': conversation_items,
             })
+
             if last_updated is None or conversation.last_updated > last_updated:
                 last_updated = conversation.last_updated
 
