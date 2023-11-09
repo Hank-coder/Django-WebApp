@@ -319,7 +319,9 @@ class GPTChatCreateView(CreateView):
             jailbreak = body_data['jailbreak']
             internet_access = body_data['meta']['content']['internet_access']
             _conversation = body_data['meta']['content']['conversation']
-            model_type = body_data.get('model')
+            # 定义公式
+            formula = '对话中有数学公式请使用LaTeX ,并使用"$...$"包围所有公式(我将使用katex处理),不需要换行'
+
             # 删除掉imageUrl再上传api 因为imageUrl是我自定义的数组 并修改成openai格式
             # _conversation = [{key: value for key, value in message.items() if key != 'imageUrl'} for message in
             #                  _conversation]
@@ -364,7 +366,7 @@ class GPTChatCreateView(CreateView):
             current_date = datetime.now().strftime("%Y-%m-%d")
             system_message = f'You are ChatGPT also known as ChatGPT, a large language model trained by OpenAI. ' \
                              f'Strictly follow the users instructions.' \
-                             f' Current date: {current_date}'
+                             f' Current date: {current_date}' + formula
 
             extra = []
             query_content = prompt["content"]  # 假设 prompt 已经定义
@@ -381,7 +383,7 @@ class GPTChatCreateView(CreateView):
                 uploaded_images = body_data['meta']['content']['uploaded_images']
                 if uploaded_images:
                     # Create vision messages for the uploaded images
-                    vision_messages = self.create_vision_messages(uploaded_images=uploaded_images)
+                    vision_messages = self.create_vision_messages(uploaded_images=uploaded_images, formula=formula)
                     # Append the vision messages to the conversation
                     conversation = [vision_messages] + [prompt] + \
                                    extra + special_instructions[jailbreak] + \
@@ -454,10 +456,10 @@ class GPTChatCreateView(CreateView):
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
-    def create_vision_messages(self, uploaded_images):
+    def create_vision_messages(self, uploaded_images, formula):
         # Start with the text prompt
         message_content = [{"type": "text", "text": 'User provide the following images,'
-                                                    'strictly follow the users instructions below.'}]
+                                                    'strictly follow the users instructions below' + formula}]
 
         # Add each image to the message content
         for image_path in uploaded_images:

@@ -18,9 +18,17 @@
         <link rel="icon" type="image/png" sizes="32x32"     href="{% static 'index/img/favicon-32x32.png' %}">
         <link rel="icon" type="image/png" sizes="16x16" href="{% static 'index/img/favicon-16x16.png' %}">
         <link rel="manifest" href="{% static 'index/img/site.webmanifest' %}">
+
+        <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+        <link rel="stylesheet" href="{% static 'index/css/texmath.css' %}">
+
         <script src="{% static 'index/js/icons.js' %}" ></script>
         <script src="{% static 'index/js/chat.js' %}" defer></script>
+
         <script src="https://cdn.jsdelivr.net/npm/markdown-it@latest/dist/markdown-it.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
+        <script src="{% static 'index/js/texmath.js' %}"></script>
+
         <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
         <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/styles/base16/dracula.min.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.css">
@@ -29,6 +37,7 @@
             const user_image        = `<img src="{% static 'index/img/user.png' %}" alt="User Avatar">`;
             const gpt_image         = `<img src="{% static 'index/img/gpt.png' %}" alt="GPT Avatar">`;
         </script>
+
         <style>
             .hljs {
                 color: #e9e9f4;

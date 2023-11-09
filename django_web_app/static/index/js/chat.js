@@ -3,7 +3,11 @@ const query = (obj) =>
     .map((k) => encodeURIComponent(k) + "=" + encodeURIComponent(obj[k]))
     .join("&");
 const colorThemes = document.querySelectorAll('[name="theme"]');
-const markdown = window.markdownit();
+//const markdown = window.markdownit();
+const markdown = markdownit({html:true})
+                      .use(texmath, { engine: katex,
+                                      delimiters: 'dollars',
+                                      katexOptions: {} } );
 const message_box = document.getElementById(`messages`);
 const message_input = document.getElementById(`message-input`);
 const box_conversations = document.querySelector(`.top`);
@@ -742,6 +746,7 @@ const load_conversation = async (conversation_id) => {
           return `<div class="image-wrapper"><img src="/media/${imagePath}" alt="Uploaded Image" class="image-preview-message"></div>`;
         }).join('') + `</div>`;
       }
+
 
     // Append message HTML with or without images
     message_box.innerHTML += `
