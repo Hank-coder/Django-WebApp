@@ -19,19 +19,19 @@
         <link rel="icon" type="image/png" sizes="16x16" href="{% static 'index/img/favicon-16x16.png' %}">
         <link rel="manifest" href="{% static 'index/img/site.webmanifest' %}">
 
-        <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+        <link  rel="stylesheet" href="{% static 'index/css/cdn.jsdelivr.net_npm_katex_dist_katex.min.css' %}">
         <link rel="stylesheet" href="{% static 'index/css/texmath.css' %}">
 
         <script src="{% static 'index/js/icons.js' %}" ></script>
         <script src="{% static 'index/js/chat.js' %}" defer></script>
 
-        <script src="https://cdn.jsdelivr.net/npm/markdown-it@latest/dist/markdown-it.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
+        <script src="{% static 'index/js/cdn.jsdelivr.net_npm_markdown-it@latest_dist_markdown-it.min.js' %}"></script>
+        <script src="{% static 'index/js/cdn.jsdelivr.net_npm_katex_dist_katex.min.js' %}"></script>
         <script src="{% static 'index/js/texmath.js' %}"></script>
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
-        <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/styles/base16/dracula.min.css">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.css">
+        <script src="{% static 'index/js/cdnjs.cloudflare.com_ajax_libs_cropperjs_1.5.12_cropper.min.js' %}"></script>
+        <link rel="stylesheet" href="{% static 'index/css/cdn.jsdelivr.net_gh_highlightjs_cdn-release@latest_build_styles_base16_dracula.min.css' %}">
+        <link rel="stylesheet" href="{% static 'index/css/cdnjs.cloudflare.com_ajax_libs_cropperjs_1.5.12_cropper.css' %}">
 
         <script>
             const user_image        = `<img src="{% static 'index/img/user.png' %}" alt="User Avatar">`;
@@ -202,7 +202,7 @@
                             Update: 2023/11/09<br>
                             Bug 请私信肥猫<br><br>
 
-                            新增GPT-4-Vision视觉模型 数学公式输出<br>
+                            新增GPT-4-Vision视觉模型 各学科公式输出<br>
                             <button id="cloudDataButton" data-login-url="{% url 'login' %}">
                                 <i class="fa-regular fa-circle-info">请登录</i></button>
                         </span>

@@ -6,9 +6,11 @@ import requests
 import os
 from django.conf import settings
 from openai import OpenAI
+
 # Set the API base URL and key (ensure these values are stored securely)
 
 get_apikey(openai)
+client = OpenAI()
 
 
 def generate_system_message(user_inputs, results_dict_cls, exif_dict):
@@ -64,8 +66,6 @@ def generate_system_message(user_inputs, results_dict_cls, exif_dict):
     return get_completion_from_messages(message)
 
 
-# 用chatgpt每个查询的类别生成5个选择题
-
 def get_completion_messages(system_message):
     return [
         {
@@ -77,22 +77,21 @@ def get_completion_messages(system_message):
 
 def get_completion_from_messages(
         messages,
-        model="gpt-3.5-turbo",
+        model="gpt-4-1106-preview",
         temperature=0.8,
-        max_tokens=3000
+        max_tokens=2000
 ):
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model=model,
         messages=messages,
         temperature=temperature,
         max_tokens=max_tokens,
     )
-    return response.choices[0].message["content"]
+    return response.choices[0].message.content
 
 
 # 调用chatgpt 语音 API
 def generate_corrected_transcript(temperature, audio_file, combined_request):
-
     if combined_request.strip():  # 使用strip()来确保不仅仅是空格
         system_prompt = "Please help me answer the user's questions, I will give you the user's previous questions " \
                         + combined_request
@@ -100,9 +99,12 @@ def generate_corrected_transcript(temperature, audio_file, combined_request):
         system_prompt = "Please help me answer the user's questions."
 
     # 转录用户的语音输入
-    user_transcript = openai.Audio.transcribe("whisper-1", audio_file).text
+    user_transcript = client.audio.transcriptions.create(
+        model="whisper-1",
+        file=audio_file
+    )
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         temperature=temperature,
         messages=[
@@ -112,18 +114,18 @@ def generate_corrected_transcript(temperature, audio_file, combined_request):
             },
             {
                 "role": "user",
-                "content": user_transcript
+                "content": user_transcript.text
             }
         ]
     )
 
     try:
-        gpt_response = response['choices'][0]['message']['content']
+        gpt_response = response.choices[0].message.content
     except KeyError:
         gpt_response = "Error: Unexpected response structure from the API."
     # 返回用户的转录文本和GPT的响应
     return {
-        'user_transcript': user_transcript,
+        'user_transcript': user_transcript.text,
         'gpt_response': gpt_response
     }
 
@@ -135,7 +137,7 @@ def generate_corrected_text(temperature, text_info, combined_request):
     else:
         system_prompt = "Please help me answer the user's questions."
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         temperature=temperature,
         messages=[
@@ -151,7 +153,7 @@ def generate_corrected_text(temperature, text_info, combined_request):
     )
 
     try:
-        gpt_response = response['choices'][0]['message']['content']
+        gpt_response = response.choices[0].message.content
     except KeyError:
         gpt_response = "Error: Unexpected response structure from the API."
     # 返回用户的转录文本和GPT的响应
@@ -163,7 +165,6 @@ def generate_corrected_text(temperature, text_info, combined_request):
 
 def generate_image(prompt, username, size="1024x1024"):
     # 使用OpenAI API生成图像
-    client = OpenAI()
     response = client.images.generate(
         model="dall-e-3",
         prompt=prompt,
