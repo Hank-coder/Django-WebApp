@@ -108,8 +108,10 @@
                 margin: 20px 0;
             }
             #image-preview {
-                max-width: 100%;
-                height: auto;
+                max-height: 600px;
+                width: auto; /* This will maintain the aspect ratio */
+                display: block; /* This will prevent inline spacing */
+                margin: 0 auto; /* This will center the image if it's within a container */
             }
 
             .crop-buttons-container {
