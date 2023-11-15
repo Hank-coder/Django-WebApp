@@ -1,0 +1,102 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PPT演讲</title>
+
+<!-- Bootstrap CSS -->
+<link href="{% static 'ppt/css/bootstrap.min.css' %}" rel="stylesheet">
+
+<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+<![endif]-->
+<script type="text/javascript">
+    var workerScriptUrl = "{% static 'ppt/js/worker.js' %}";
+</script>
+
+<link rel="stylesheet" href="{% static 'ppt/css/font-awesome.min.css' %}">
+<link rel="stylesheet" href="{% static 'ppt/css/pptx2html.css' %}">
+
+<script type="text/javascript" src="{% static 'ppt/js/jquery-1.11.3.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'ppt/js/FileSaver.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'ppt/js/lz-string.min.js ' %}"></script>
+<meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+
+<body>
+	
+	<div class="container">
+		
+		<div class="header">
+			<ul class="nav nav-pills pull-right">
+				<li class="active"><a href="{% url 'blog-home' %}"><i class="glyphicon glyphicon-home"></i>返回主页</a></li>
+			</ul>
+			<h2 class="text-muted">PPT演讲</h2>
+		</div>
+		
+		<div class="row">
+			<div class="col-md-6 col-md-offset-3" style="text-align: center;">
+				
+				<!-- Split button -->
+				<div class="file-upload-container">
+                  <div class="fileUpload btn btn-success">
+                    <span><i class="glyphicon glyphicon-upload"></i> 请选择一个PPTX文件 </span>
+                    <input id="uploadBtn" type="file" class="upload" accept="application/vnd.openxmlformats-officedocument.presentationml.presentation"/>
+                  </div>
+                  <div id="uploadNotification" class="alert hidden"></div>
+                </div>
+
+            </div>
+		
+{#		<div class="row">#}
+{#			<div class="col-lg-12">#}
+{#				<div class="progress">#}
+{#					<div id="load-progress" class="progress-bar progress-bar-striped" style="transition: none;" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">#}
+{#						0%#}
+{#					</div>#}
+{#				</div>#}
+{#			</div>#}
+{#		</div>#}
+		
+		<div class="row">
+			<div class="col-lg-12">
+				<div id="error_block" class="alert alert-danger hidden">
+					You will need a recent browser to use this demo :(
+				</div>
+				<div id="info_block" class="alert alert-success" role="alert">
+				
+				</div>
+				<div id="result_block" class="hidden">
+                    <div id="result" class="result"> </div>
+
+                    <div class="pagination-controls">
+                        <button id="prev-slide">Previous</button>
+                        <button id="next-slide">Next</button>
+                    </div>
+                </div>
+			</div>
+		</div>
+		
+{#		<div class="footer">#}
+{#			<hr>#}
+{#			<p>Copyright © 2015 g21589, All Rights Reserved.<br>Contact Person: g21589, E-mail: g21589@gmail.com</p>#}
+{#		</div>#}
+{#		#}
+	</div>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script type="text/javascript" src="{% static 'ppt/js/bootstrap.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'ppt/js/pptx2html.js' %}"></script>
+
+<link rel="stylesheet" href="{% static 'ppt/css/nv.d3.min.css' %}">
+<script type="text/javascript" src="{% static 'ppt/js/chart/d3.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'ppt/js/chart/nv.d3.min.js' %}"></script>
+
+</body>
+</html>

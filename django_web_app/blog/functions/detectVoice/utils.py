@@ -14,7 +14,7 @@ def save_audio_file(audio_file, user_info):
         new_file_name = f"{user_info}_{audio_file.name}"
 
         # Build the full file path
-        file_path = os.path.join(settings.BASE_DIR, "blog", "detectImage", "detectVoice", "record", new_file_name)
+        file_path = os.path.join(settings.BASE_DIR, "blog", "functions", "detectVoice", "record", new_file_name)
 
         # Ensure the directory exists
         directory = os.path.dirname(file_path)

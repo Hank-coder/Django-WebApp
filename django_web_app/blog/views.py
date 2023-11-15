@@ -7,8 +7,10 @@ from urllib.parse import unquote
 import openai
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, HttpResponseRedirect, HttpResponseBadRequest, \
+    FileResponse, HttpResponseNotFound
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 import os
@@ -19,6 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 from json import loads, dumps
 from datetime import datetime
 
+from openai import OpenAI
 from pytesseract import pytesseract
 from requests import get, post
 from django.views.generic import (
@@ -30,10 +33,11 @@ from django.views.generic import (
 )
 
 from .chatPages.server.config import special_instructions
-from .detectImage.detectVoice.audio2text import gpt_audio_response, gpt_text_response
-from .detectImage.gpt_generate import generate_image
-from .detectImage.image2text import generate_text
-from .detectImage.utils import get_apikey, fetch_search_results
+from .functions.detectVoice.audio2text import gpt_audio_response, gpt_text_response
+from .functions.gpt_generate import generate_image
+from .functions.image2text import generate_text
+from .functions.ppt2script.ppt_script_gen import summarize_layout, auto_summary_ppt, auto_summary_ppt_page, load_json
+from .functions.utils import get_apikey, fetch_search_results
 from .models import Post, Category, PostAudio, ChatMessage, Conversation
 import operator
 from django.urls import reverse_lazy, reverse
@@ -100,6 +104,117 @@ class UserPostListView(ListView):
 class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/post_detail.html'
+
+
+class ppt2speech(CreateView):
+    model = Post
+    fields = []
+    template_name = 'blog/ppt_speech.html'
+
+
+class UploadFileForm(forms.Form):
+    file = forms.FileField()
+
+
+class pptSave(LoginRequiredMixin, CreateView):
+
+    @csrf_exempt  # csrf_exempt is only for demonstration purposes
+    def post(self, request, *args, **kwargs):
+        try:
+            if 'file' in request.FILES:  # Case 1: File upload and initial processing
+                form = UploadFileForm(request.POST, request.FILES)
+                if form.is_valid():
+                    file = request.FILES['file']
+                    relative_path = os.path.join('uploaded_ppt', request.user.username)
+                    save_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+                    if os.path.exists(save_path):
+                        shutil.rmtree(save_path)
+
+                    os.makedirs(save_path, exist_ok=True)
+                    fs = FileSystemStorage(location=save_path)
+                    filename = fs.save(file.name, file)
+                    pptx_path = os.path.join(save_path, filename)
+
+                    # Assume summarize_layout generates a 'layouts.json' file in save_path
+                    summarize_layout(pptx_path, save_path)
+
+                    # Generate speech text for the first page (index 1)  Start from page 1
+                    current_page_index = 0
+                    speech_text_for_current_page = self.generate_speech_text(save_path, current_page_index)
+
+                    return JsonResponse({
+                        'message': 'File uploaded and processed successfully!',
+                        'pages': {f"page_{current_page_index}": speech_text_for_current_page}
+                    }, status=200)
+                else:
+                    return JsonResponse({'status': 'error', 'message': 'Form is not valid'}, status=400)
+            else:  # Case 2: Subsequent slide content request
+                data = json.loads(request.body)
+                slide_index = data.get('slideIndex', 0)  # Default to first slide if not specified
+                # print(slide_index)
+                save_path = os.path.join(settings.MEDIA_ROOT, 'uploaded_ppt', request.user.username)
+                speech_text = self.generate_speech_text(save_path, slide_index)
+                # print(speech_text)
+                return JsonResponse({'message': 'Slide content retrieved successfully!', 'content': speech_text},
+                                    status=200)
+
+        except json.JSONDecodeError:
+            return HttpResponseBadRequest("Invalid JSON format")
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    def generate_speech_text(self, save_path, page_index):
+        # Load the content for all pages
+        content_str_lst = load_json(os.path.join(save_path, 'layouts.json'))
+
+        # Call a hypothetical function to generate speech text for the given page index
+        speech_text_for_page = auto_summary_ppt_page(
+            background='这是一个中文演讲',
+            content_str_lst=content_str_lst,
+            page=page_index,
+            save_path=save_path,
+            sentence_cnt=6,
+            use_paid_API=True
+        )
+        return speech_text_for_page
+
+
+class pptPlay(LoginRequiredMixin, CreateView):
+    @csrf_exempt  # csrf_exempt is only for demonstration purposes
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            slide_index = data.get('slideIndex', '1')  # Default to first slide if not specified
+            save_path = os.path.join(settings.MEDIA_ROOT, 'uploaded_ppt', request.user.username)
+            speech_file_path = os.path.join(save_path, f"speech_{slide_index}.mp3")
+
+            # Check if the file already exists
+            if not os.path.isfile(speech_file_path):
+                text_content = data.get('text', '')
+                client = OpenAI()
+
+                # If the file does not exist, generate the speech
+                response = client.audio.speech.create(
+                    model="tts-1",
+                    voice="alloy",
+                    input=text_content
+                )
+                response.stream_to_file(speech_file_path)
+
+            # At this point, the file exists, so return it in the response
+            return FileResponse(open(speech_file_path, 'rb'), as_attachment=True, content_type='audio/mpeg')
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+def download_speech(request, slide_index):
+    file_path = os.path.join(settings.MEDIA_ROOT, 'uploaded_ppt', request.user.username, f"speech_{slide_index}.mp3")
+
+    if os.path.exists(file_path):
+        return FileResponse(open(file_path, 'rb'), content_type='audio/mpeg')
+    else:
+        return HttpResponseNotFound('The requested mp3 was not found on the server.')
 
 
 class PostForm(forms.ModelForm):  # 定义的表单
@@ -320,7 +435,7 @@ class GPTChatCreateView(CreateView):
             internet_access = body_data['meta']['content']['internet_access']
             _conversation = body_data['meta']['content']['conversation']
             # 定义公式
-            formula = '对话中使用公式请使用LaTeX ,并使用"$...$"包围所有公式(我将使用katex处理),不需要换行'
+            formula = '对话中任何计算公式及学科符号请使用LaTeX输出 ,并使用"$...$"包围(将使用katex处理),不需要换行'
 
             # 删除掉imageUrl再上传api 因为imageUrl是我自定义的数组 并修改成openai格式
             # _conversation = [{key: value for key, value in message.items() if key != 'imageUrl'} for message in
@@ -360,7 +475,7 @@ class GPTChatCreateView(CreateView):
                     if 'imageUrl' in message:
                         del message['imageUrl']
 
-            # print(_conversation) // 测试有用
+            # print(_conversation) // 测试用
 
             prompt = body_data['meta']['content']['parts'][0]
             current_date = datetime.now().strftime("%Y-%m-%d")
@@ -392,11 +507,13 @@ class GPTChatCreateView(CreateView):
             url = f"{self.openai_api_base}/v1/chat/completions"
 
             if body_data['model'] == 'gpt-4' and (not request.user.is_authenticated):
-                body_data['model'] = 'gpt-3.5-turbo'
+                body_data['model'] = 'gpt-3.5-turbo-1106'
 
-            # 定义版本 gpt-4 turbo
+            # 定义版本 turbo
             if body_data['model'] == 'gpt-4':
                 body_data['model'] = 'gpt-4-1106-preview'
+            if body_data['model'] == 'gpt-3.5':
+                body_data['model'] = 'gpt-3.5-turbo-1106'
 
             print(body_data['model'])
             # 给openai发送请求
