@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site',
                     'aichatting.top', 'www.aichatting.top',
-                 '38.60.203.214', '127.0.0.1', '8.210.253.73']
+                  '127.0.0.1', '47.236.15.187']
 
 
 # 服务器端Https启用
