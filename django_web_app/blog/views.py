@@ -432,8 +432,14 @@ class GPTChatCreateView(CreateView):
 
     def post(self, request, *args, **kwargs):
         try:
+
             body_unicode = request.body.decode('utf-8')
             body_data = loads(body_unicode)  # 获取所有Body信息
+
+            if body_data['model'] == 'gpt-4' and (not request.user.is_authenticated):
+                body_data['model'] = 'gpt-3.5'
+            if body_data['model'] == 'gpt-4-vision-preview' and (not request.user.is_authenticated):
+                body_data['model'] = 'gpt-3.5'
 
             jailbreak = body_data['jailbreak']
             internet_access = body_data['meta']['content']['internet_access']
@@ -510,10 +516,7 @@ class GPTChatCreateView(CreateView):
             # print(conversation)
             url = f"{self.openai_api_base}/v1/chat/completions"
 
-            if body_data['model'] == 'gpt-4' and (not request.user.is_authenticated):
-                body_data['model'] = 'gpt-3.5-turbo-1106'
-
-            # 定义版本 turbo
+            # 定义最新版本 turbo
             if body_data['model'] == 'gpt-4':
                 body_data['model'] = 'gpt-4-1106-preview'
             if body_data['model'] == 'gpt-3.5':
