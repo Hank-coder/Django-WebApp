@@ -117,6 +117,7 @@ class UploadFileForm(forms.Form):
 
 
 class pptSave(LoginRequiredMixin, CreateView):
+    model = Post
 
     @csrf_exempt  # csrf_exempt is only for demonstration purposes
     def post(self, request, *args, **kwargs):
@@ -140,7 +141,8 @@ class pptSave(LoginRequiredMixin, CreateView):
 
                     # Generate speech text for the first page (index 1)  Start from page 1
                     current_page_index = 0
-                    speech_text_for_current_page = self.generate_speech_text(save_path, current_page_index)
+                    userRequest = '演讲的首页 默认语言中文'
+                    speech_text_for_current_page = self.generate_speech_text(save_path, current_page_index, userRequest)
 
                     return JsonResponse({
                         'message': 'File uploaded and processed successfully!',
@@ -152,8 +154,10 @@ class pptSave(LoginRequiredMixin, CreateView):
                 data = json.loads(request.body)
                 slide_index = data.get('slideIndex', 0)  # Default to first slide if not specified
                 # print(slide_index)
+                userRequest = data.get('userRequest')
+                # print(userRequest)
                 save_path = os.path.join(settings.MEDIA_ROOT, 'uploaded_ppt', request.user.username)
-                speech_text = self.generate_speech_text(save_path, slide_index)
+                speech_text = self.generate_speech_text(save_path, slide_index, userRequest)
                 # print(speech_text)
                 return JsonResponse({'message': 'Slide content retrieved successfully!', 'content': speech_text},
                                     status=200)
@@ -163,13 +167,13 @@ class pptSave(LoginRequiredMixin, CreateView):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-    def generate_speech_text(self, save_path, page_index):
+    def generate_speech_text(self, save_path, page_index, user_request):
         # Load the content for all pages
         content_str_lst = load_json(os.path.join(save_path, 'layouts.json'))
 
         # Call a hypothetical function to generate speech text for the given page index
         speech_text_for_page = auto_summary_ppt_page(
-            background='这是一个中文演讲',
+            background=user_request,
             content_str_lst=content_str_lst,
             page=page_index,
             save_path=save_path,

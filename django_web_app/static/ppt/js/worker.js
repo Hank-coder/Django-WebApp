@@ -234,7 +234,7 @@ function processSingleSlide(zip, sldFileName, index, slideSize) {
     "<div class='chatgpt-textbox' data-text-index='" + slideIndex + "' contenteditable='true'>" +
     chatGPTContent +
     "</div>" +
-    "<button class='play-sound' data-text-index='" + slideIndex + "'>Play Sound</button>" +
+    "<button class='play-sound' data-text-index='" + slideIndex + "'>播放文稿</button> &nbsp" +
     "<a href='/download_speech/" + slideIndex + "/' class='download-speech' data-text-index='" + slideIndex + "'>下载录音</a>" +
     "</div>";
 

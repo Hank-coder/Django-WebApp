@@ -1,6 +1,13 @@
 let currentSlide = 0;
 let slides;
 $(document).ready(function() {
+	//显示弹出框
+	 $("#requestModal").modal({
+        backdrop: 'static', // Disable clicking outside the modal to close
+        keyboard: false     // Disable using the keyboard to close
+    });
+    $("#requestModal").modal('show');
+
 
 	if (window.Worker) {
 		
@@ -154,10 +161,45 @@ Reveal.initialize({\
 				alert("Browser don't support Web Storage!");
 			}
 		});
+
 	} else {
 		alert("Browser don't support Web Worker!");
 	}
 });
+
+// PPT背景文本框监听
+ document.addEventListener('input', function (event) {
+        if (event.target.id !== 'userRequest') return;
+        autoExpand(event.target);
+    }, false);
+
+    function autoExpand(field) {
+        // Reset field height
+        field.style.height = 'inherit';
+
+        // Get the computed styles for the element
+        var computed = window.getComputedStyle(field);
+
+        // Calculate the height
+        var height = parseInt(computed.getPropertyValue('border-top-width'), 10)
+                     + parseInt(computed.getPropertyValue('padding-top'), 10)
+                     + field.scrollHeight
+                     + parseInt(computed.getPropertyValue('padding-bottom'), 10)
+                     + parseInt(computed.getPropertyValue('border-bottom-width'), 10);
+
+        field.style.height = height + 'px';
+    }
+
+// 弹出框提交
+function submitRequest() {
+	 var userRequest = $("#userRequest").val();
+    // Save the user request in local storage
+	localStorage.setItem("userRequest", userRequest);
+
+	$("#requestModal").modal('hide');
+	$("#mainContent").show();
+}
+
 
 var currentAudio = null; // This will hold the currently playing audio element
 // 声音播放
@@ -258,35 +300,46 @@ function showSlide(index) {
 }
 
 function fetchContentFromBackend(slideIndex, textboxElement) {
-	   const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
-	  // Make a request to the backend endpoint
-	  fetch('/post/ppt2speech/save', {
-		method: 'POST',
-		credentials: 'include', // If you're including credentials like cookies
-		headers: {
-		  'Content-Type': 'application/json',
-		  'X-CSRFToken': csrfToken // Function to get the CSRF token
-		},
-		body: JSON.stringify({ slideIndex: slideIndex }) // Send the current slide index in the request body
-	  })
-	  .then(response => {
-		if (!response.ok) {
-		  throw new Error('Network response was not ok');
-		}
-		return response.json();
-	  })
-	  .then(data => {
-		// Assuming the backend returns an object with a 'content' key
-		if (data.content) {
-		  textboxElement.innerHTML = data.content;
-		  localStorage.setItem('editable-content-' + slideIndex, data.content); // Update local storage
-		}
-	  })
-	  .catch(error => {
-		console.error('Failed to fetch content:', error);
-		textboxElement.innerHTML = '内容加载失败'; // Display "Content loading failed" message
-	  });
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+    let userRequest = localStorage.getItem("userRequest"); // Retrieve user request from local storage
+
+	 // Check if userRequest is empty or not set, and assign default value if necessary
+    if (!userRequest) {
+        userRequest = '普通中文演讲';
+    }
+
+    // Make a request to the backend endpoint
+    fetch('/post/ppt2speech/save', {
+        method: 'POST',
+        credentials: 'include', // If you're including credentials like cookies
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken // Function to get the CSRF token
+        },
+        body: JSON.stringify({
+            slideIndex: slideIndex,
+            userRequest: userRequest // Send user request along with slide index
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Assuming the backend returns an object with a 'content' key
+        if (data.content) {
+            textboxElement.innerHTML = data.content;
+            localStorage.setItem('editable-content-' + slideIndex, data.content); // Update local storage
+        }
+    })
+    .catch(error => {
+        console.error('Failed to fetch content:', error);
+        textboxElement.innerHTML = '内容加载失败'; // Display "Content loading failed" message
+    });
 }
+
 
 // Navigation event listeners
 // Assuming you have buttons or some other elements for navigation
@@ -302,6 +355,7 @@ document.getElementById('prev-slide').addEventListener('click', () => {
     showSlide(currentSlide);
 });
 
+// 禁用所有按钮
 function toggleButtonsDisabled(disabled) {
   document.querySelectorAll('button').forEach(function(button) {
     button.disabled = disabled;
@@ -310,10 +364,10 @@ function toggleButtonsDisabled(disabled) {
 
 // PPT上传
 document.addEventListener('DOMContentLoaded', function () {
+
   document.getElementById('uploadBtn').addEventListener('change', function (evt) {
 	  	// Clear all local storage
   	localStorage.clear();
-
 	// Disable all buttons during the upload
   	toggleButtonsDisabled(true);
 
@@ -363,6 +417,7 @@ document.addEventListener('DOMContentLoaded', function () {
     .finally(() => {
       // Optional: Remove loading indication
 		 toggleButtonsDisabled(false);
+		 document.getElementById('submitBtn').disabled = false;
     });
   });
 });

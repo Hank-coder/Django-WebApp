@@ -30,7 +30,47 @@
 </head>
 
 <body>
-	
+
+   <!-- Modal 弹出框 -->
+    <div class="modal fade" id="requestModal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalLabel">信息采取</h4>
+                </div>
+                <div class="modal-body">
+                    <!-- File Upload Container -->
+                    <div class="file-upload-container">
+                         <label> 1. </label> &nbsp <div class="fileUpload btn btn-success">
+                            <span><i class="glyphicon glyphicon-upload"></i> 请选择一个PPTX文件 </span>
+                            <input id="uploadBtn" type="file" class="upload" accept="application/vnd.openxmlformats-officedocument.presentationml.presentation"/>
+                        </div>
+                        <div id="uploadNotification" class="alert hidden"></div>
+                    </div>
+                    <br>
+                    <!-- Text Box for Additional Request -->
+                    <label for="userRequest">2. 请输入PPT演讲背景: 输入使用语言 摘要等信息</label>
+                    <textarea class="form-control" id="userRequest" rows="10" placeholder="以下为例子:
+                    1. 摘要:
+                    “探索绿色技术与环境保护的结合，以及这些措施如何塑造我们的未来。”
+                    这个摘要简洁地概述了演讲的主要内容，引起听众的兴趣。
+                    2. 使用语言: 中文
+                    清晰、准确且易于理解。避免使用过于技术化的术语。
+                    同时，使用引人入胜的故事或例子来说明关键点，使内容更加生动。
+                    3. 视觉元素:
+                    使用图表、图片或简洁的图形来辅助说明关键概念。
+                    确保这些视觉元素与演讲内容紧密相关，避免过于花哨或分散注意力。"></textarea>
+
+                </div>
+                <div class="modal-footer">
+                     <a href="{% url 'blog-home' %}" class="btn btn-secondary">取消</a>
+                     <button type="button" class="btn btn-primary" id="submitBtn" onclick="submitRequest()" disabled>提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 	<div class="container">
 		
 		<div class="header">
@@ -40,19 +80,18 @@
 			<h2 class="text-muted">PPT演讲</h2>
 		</div>
 		
-		<div class="row">
-			<div class="col-md-6 col-md-offset-3" style="text-align: center;">
-				
-				<!-- Split button -->
-				<div class="file-upload-container">
-                  <div class="fileUpload btn btn-success">
-                    <span><i class="glyphicon glyphicon-upload"></i> 请选择一个PPTX文件 </span>
-                    <input id="uploadBtn" type="file" class="upload" accept="application/vnd.openxmlformats-officedocument.presentationml.presentation"/>
-                  </div>
-                  <div id="uploadNotification" class="alert hidden"></div>
-                </div>
-
-            </div>
+{#		<div class="row">#}
+{#			<div class="col-md-6 col-md-offset-3" style="text-align: center;">#}
+{#				#}
+{#				<!-- Split button -->#}
+{#				<div class="file-upload-container">#}
+{#                  <div class="fileUpload btn btn-success">#}
+{#                    <span><i class="glyphicon glyphicon-upload"></i> 请选择一个PPTX文件 </span>#}
+{#                    <input id="uploadBtn" type="file" class="upload" accept="application/vnd.openxmlformats-officedocument.presentationml.presentation"/>#}
+{#                  </div>#}
+{#                  <div id="uploadNotification" class="alert hidden"></div>#}
+{#                </div>#}
+{#            </div>#}
 		
 {#		<div class="row">#}
 {#			<div class="col-lg-12">#}
@@ -63,7 +102,7 @@
 {#				</div>#}
 {#			</div>#}
 {#		</div>#}
-		
+
 		<div class="row">
 			<div class="col-lg-12">
 				<div id="error_block" class="alert alert-danger hidden">
@@ -72,10 +111,10 @@
 				<div id="result_block" class="hidden">
                     <div id="result" class="result"> </div>
 
-                    <div class="pagination-controls">
-                        <button id="prev-slide">Previous</button>
-                        <button id="next-slide">Next</button>
-                    </div>
+                  <div class="text-center">
+                    <button class="btn btn-primary mx-1" id="prev-slide">上一页</button>
+                    <button class="btn btn-primary mx-1" id="next-slide">下一页</button>
+                </div>
                 </div>
 			</div>
 		</div>

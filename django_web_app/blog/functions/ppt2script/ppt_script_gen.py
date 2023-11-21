@@ -229,7 +229,9 @@ def auto_summary_ppt_page(background, content_str_lst, page, save_path, sentence
     # current_content = content_str_lst[page] if page < len(content_str_lst) else "Content for this page is not available."
 
     prompt = '''Please write a script of speech presentation, based on the powerpoint slide layouts. The 
-            background of this speech is {}. I'll provide you with the presentation [layout] of [current] 
+            requirement of this speech is {} !
+            
+            I'll provide you with the presentation [layout] of [current] 
             slide, previous slides, and later slides, and the [previous slide speech script], if any. Please generate 
             content only for the [current] slide, while considering the context of the previous and later slides to make 
             it coherent. Unless it is the first slides, do NOT begin with words like 'Ladies and gentlemen' -- no one say 

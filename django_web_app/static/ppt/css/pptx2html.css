@@ -1,7 +1,9 @@
 .hidden {
 	display: none;
 }
-
+ body {
+        background-color: lightgrey;
+  }
 pre {
 	width: 100%;
 	height: 360px;
@@ -149,7 +151,7 @@ section svg.drawing {
 }
 
 .result {
-    width: 100%;
+    width: 110%;
     height: 800px; /* Adjust as needed */
     overflow: hidden;
     position: relative;
@@ -192,3 +194,34 @@ section svg.drawing {
   background-color: #f2dede;
   border-color: #ebccd1;
 }
+
+textarea.form-control {
+	min-height: 50px; /* Minimum height */
+	resize: none; /* Disable manual resizing */
+    }
+
+.modal-body {
+    max-height: 150%; /* 将最大高度设置为原始高度的150% */
+    overflow-y: auto; /* 如果内容超出这个高度，就显示滚动条 */
+}
+
+.play-sound {
+    background-color: #4CAF50; /* 绿色背景 */
+    border: none; /* 无边框 */
+    color: white; /* 白色文本 */
+    padding: 2px 2px;
+    text-align: center; /* 文本居中 */
+    text-decoration: none; /* 无文本装饰 */
+    display: inline-block; /* 行内块显示 */
+    font-size: 12px; /* 16px字体大小 */
+    margin: 3px 3px; /* 外边距 */
+    cursor: pointer; /* 鼠标悬停时显示指针 */
+    border-radius: 4px; /* 边框圆角 */
+    transition-duration: 0.4s; /* 过渡效果持续时间 */
+}
+
+  /* 当用户鼠标悬停时添加的样式 */
+.play-sound:hover {
+    background-color: #45a049; /* 深绿色背景 */
+}
+
