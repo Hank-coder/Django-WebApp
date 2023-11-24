@@ -111,3 +111,11 @@ class ChatMessage(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)  # 记录消息的发送时间
     imageUrl = models.CharField(max_length=255, default="")
 
+
+# GPT-4 运算统计
+class DailyUsage(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    last_used_at = models.DateTimeField(default=timezone.now)
+    usage_count = models.IntegerField(default=0)
+    total_count = models.IntegerField(default=0)
+

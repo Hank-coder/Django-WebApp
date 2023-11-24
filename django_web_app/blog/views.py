@@ -19,7 +19,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from json import loads, dumps
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from openai import OpenAI
 from pytesseract import pytesseract
@@ -38,12 +38,12 @@ from .functions.gpt_generate import generate_image
 from .functions.image2text import generate_text
 from .functions.ppt2script.ppt_script_gen import summarize_layout, auto_summary_ppt, auto_summary_ppt_page, load_json
 from .functions.utils import get_apikey, fetch_search_results
-from .models import Post, Category, PostAudio, ChatMessage, Conversation
+from .models import Post, Category, PostAudio, ChatMessage, Conversation, DailyUsage
 import operator
 from django.urls import reverse_lazy, reverse
 from django.contrib.staticfiles.views import serve
 
-from django.db.models import Q
+from django.db.models import Q, F
 from django.contrib import messages
 from django import forms
 from .models import Post
@@ -436,14 +436,27 @@ class GPTChatCreateView(CreateView):
             body_unicode = request.body.decode('utf-8')
             body_data = loads(body_unicode)  # 获取所有Body信息
 
+            # 检查权限
             if body_data['model'] == 'gpt-4' and (not request.user.is_authenticated):
                 body_data['model'] = 'gpt-3.5'
             if body_data['model'] == 'gpt-4-vision-preview' and (not request.user.is_authenticated):
                 body_data['model'] = 'gpt-3.5'
+            if body_data['model'] in ['gpt-4', 'gpt-4-vision-preview']:
+                # 如果用户是 staff，则直接跳过使用限制检查
+                if request.user.is_staff:
+                    pass
+                elif self.can_use_gpt4(request.user):  # 假设这个函数会更新使用次数并返回是否超过限制
+                    # 如果用户未超过使用限制，可以继续使用 GPT-4
+                    pass
+                else:
+                    # 如果用户超过了使用限制，更改模型为 GPT-3.5
+                    body_data['model'] = 'gpt-3.5'
 
             jailbreak = body_data['jailbreak']
             internet_access = body_data['meta']['content']['internet_access']
             _conversation = body_data['meta']['content']['conversation']
+            _conversation = _conversation[-8:]
+            # print(_conversation)
             # 定义公式
             formula = '对话中的数学 物理 化学 经济 等学科公式请使用LaTeX输出 ,并使用"$...$"包围(我将使用katex处理),不需要换行'
 
@@ -519,6 +532,7 @@ class GPTChatCreateView(CreateView):
             # 定义最新版本 turbo
             if body_data['model'] == 'gpt-4':
                 body_data['model'] = 'gpt-4-1106-preview'
+
             if body_data['model'] == 'gpt-3.5':
                 body_data['model'] = 'gpt-3.5-turbo-1106'
 
@@ -533,7 +547,7 @@ class GPTChatCreateView(CreateView):
                     'model': body_data['model'],
                     'messages': conversation,
                     'stream': True,
-                    "max_tokens": 3000
+                    "max_tokens": 2048
                 },
                 stream=True
             )
@@ -602,6 +616,28 @@ class GPTChatCreateView(CreateView):
         }
 
         return vision_message
+    # GPT限额
+    def can_use_gpt4(self, user):
+        current_time = timezone.now()
+        usage_record, created = DailyUsage.objects.get_or_create(user=user, defaults={'last_used_at': current_time})
+
+        if not created and current_time - usage_record.last_used_at < timedelta(hours=12):
+            if usage_record.usage_count >= 15:
+                return False  # 在12小时内达到限额
+
+        # 重置计数或增加使用次数
+        if created or current_time - usage_record.last_used_at >= timedelta(hours=12):
+            usage_count = 1
+        else:
+            usage_count = usage_record.usage_count + 1
+
+        # 增加总使用次数
+        DailyUsage.objects.filter(id=usage_record.id).update(
+            last_used_at=current_time,
+            usage_count=usage_count,
+            total_count=F('total_count') + 1  # 使用 F 表达式确保原子性更新
+        )
+        return True
 
 
 # 入库
