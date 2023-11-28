@@ -456,7 +456,7 @@ class GPTChatCreateView(CreateView):
             internet_access = body_data['meta']['content']['internet_access']
             _conversation = body_data['meta']['content']['conversation']
             if not request.user.is_staff:
-                _conversation = _conversation[-10:]
+                _conversation = _conversation[-8:]
             # print(_conversation)
             # 定义公式
             formula = ' 对话中的数学 物理 化学 经济 等学科公式请使用LaTeX输出 ,并使用"$...$"包围(我将使用katex处理),不需要换行'
