@@ -520,14 +520,13 @@ class GPTChatCreateView(CreateView):
                 uploaded_images = body_data['meta']['content']['uploaded_images']
                 if uploaded_images:
                     # Create vision messages for the uploaded images
-                    print(prompt)
+                    # print(prompt)
                     vision_messages = self.create_vision_messages(uploaded_images=uploaded_images,
                                                                   prompt=prompt['content'],
                                                                   formula=formula)
                     # Append the vision messages to the conversation
-                    conversation = [vision_messages] + \
-                                   extra + special_instructions[jailbreak] + \
-                                   _conversation
+                    conversation = extra + special_instructions[jailbreak] + \
+                                   _conversation + [vision_messages]
             # print(conversation)
             url = f"{self.openai_api_base}/v1/chat/completions"
 
@@ -598,8 +597,8 @@ class GPTChatCreateView(CreateView):
 
     def create_vision_messages(self, uploaded_images, prompt, formula):
         # Start with the text prompt
-        message_content = [{"type": "text", "text": 'User provide the following images,'
-                                                    'strictly follow the users instructions: ' + prompt + formula}]
+        message_content = [
+            {"type": "text", "text": 'Strictly follow the users instructions: ' + prompt + ' ' + formula}]
 
         # Add each image to the message content
         for image_path in uploaded_images:
