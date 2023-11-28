@@ -455,10 +455,11 @@ class GPTChatCreateView(CreateView):
             jailbreak = body_data['jailbreak']
             internet_access = body_data['meta']['content']['internet_access']
             _conversation = body_data['meta']['content']['conversation']
-            _conversation = _conversation[-8:]
+            if not request.user.is_staff:
+                _conversation = _conversation[-10:]
             # print(_conversation)
             # 定义公式
-            formula = '对话中的数学 物理 化学 经济 等学科公式请使用LaTeX输出 ,并使用"$...$"包围(我将使用katex处理),不需要换行'
+            formula = ' 对话中的数学 物理 化学 经济 等学科公式请使用LaTeX输出 ,并使用"$...$"包围(我将使用katex处理),不需要换行'
 
             # 删除掉imageUrl再上传api 因为imageUrl是我自定义的数组 并修改成openai格式
             # _conversation = [{key: value for key, value in message.items() if key != 'imageUrl'} for message in
@@ -498,8 +499,6 @@ class GPTChatCreateView(CreateView):
                     if 'imageUrl' in message:
                         del message['imageUrl']
 
-            # print(_conversation) // 测试用
-
             prompt = body_data['meta']['content']['parts'][0]
             current_date = datetime.now().strftime("%Y-%m-%d")
             system_message = f'You are ChatGPT also known as ChatGPT, a large language model trained by OpenAI. ' \
@@ -521,9 +520,12 @@ class GPTChatCreateView(CreateView):
                 uploaded_images = body_data['meta']['content']['uploaded_images']
                 if uploaded_images:
                     # Create vision messages for the uploaded images
-                    vision_messages = self.create_vision_messages(uploaded_images=uploaded_images, formula=formula)
+                    print(prompt)
+                    vision_messages = self.create_vision_messages(uploaded_images=uploaded_images,
+                                                                  prompt=prompt['content'],
+                                                                  formula=formula)
                     # Append the vision messages to the conversation
-                    conversation = [vision_messages] + [prompt] + \
+                    conversation = [vision_messages] + \
                                    extra + special_instructions[jailbreak] + \
                                    _conversation
             # print(conversation)
@@ -536,7 +538,7 @@ class GPTChatCreateView(CreateView):
             if body_data['model'] == 'gpt-3.5':
                 body_data['model'] = 'gpt-3.5-turbo-1106'
 
-            print(body_data['model'])
+            # print(body_data['model'])
             # 给openai发送请求
             gpt_resp = post(
                 url=url,
@@ -594,10 +596,10 @@ class GPTChatCreateView(CreateView):
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
-    def create_vision_messages(self, uploaded_images, formula):
+    def create_vision_messages(self, uploaded_images, prompt, formula):
         # Start with the text prompt
         message_content = [{"type": "text", "text": 'User provide the following images,'
-                                                    'strictly follow the users instructions below' + formula}]
+                                                    'strictly follow the users instructions: ' + prompt + formula}]
 
         # Add each image to the message content
         for image_path in uploaded_images:
@@ -616,6 +618,7 @@ class GPTChatCreateView(CreateView):
         }
 
         return vision_message
+
     # GPT限额
     def can_use_gpt4(self, user):
         current_time = timezone.now()
@@ -660,7 +663,7 @@ class SaveChat(LoginRequiredMixin, CreateView):
             )
 
             # 如果对话是新创建的，可以添加标题
-            conversation.title = content[:10];
+            conversation.title = content[:10]
             conversation.save()  # auto_now=True会自动为您处理时间更新
 
             # 添加消息到对话

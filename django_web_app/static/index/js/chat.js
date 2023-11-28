@@ -41,6 +41,7 @@ function triggerFileInput() {
     const fileInput = document.getElementById('file-input');
     fileInput.click();
 }
+
 function previewImage(inputOrBlob) {
     let blob;
 
@@ -112,7 +113,7 @@ function previewImage(inputOrBlob) {
         document.getElementById('cancel-crop').addEventListener('click', function() {
             hideCropper();
 
-            document.querySelector('.upload-icon').classList.remove('disabled-upload');
+        document.querySelector('.upload-icon').classList.remove('disabled-upload');
         });
     }
 
