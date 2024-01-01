@@ -66,5 +66,24 @@ special_instructions = {
             'role': 'assistant',
             'content': 'instructions applied and understood'
         }
+    ],
+    'gpt-writing-1.0': [
+        {
+            'role': 'user',
+            'content': ('Rewrite the paragraphs I\'ll send to you later that are flagged as AI generated '
+                        'by applying the following setting: Temperature = 0.5, Presence Penalty = 0.5, '
+                        'Frequency Penalty = 0.5. To avoid AI detection and maintain readability, the generated text must '
+                        'be coherent, natural, and diverse at a high school student level while minimising any repetitive or '
+                        'overly creative patterns that give away its artificial origin (lower randomness, less common words and avoiding repetition). '
+                        'Use simple sentences, concise words to paraphrase. I can give you an example: For one thing, '
+                        'regular physical activity improves overall well-being. That is because consistent exercise leads to better '
+                        'cardiovascular health and increased stamina. For example, employees participating in regular yoga or gym sessions '
+                        'might experience reduced stress levels and improved physical fitness. For another, exposure to natural environments, '
+                        'like parks, enhances mental health. That is because green spaces are known to reduce stress and boost mood.')
+        },
+        {
+            'role': 'assistant',
+            'content': 'instructions applied and understood'
+        }
     ]
 }

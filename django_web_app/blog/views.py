@@ -459,7 +459,7 @@ class GPTChatCreateView(CreateView):
                 _conversation = _conversation[-8:]
             # print(_conversation)
             # 定义公式
-            formula = ' 对话中存在的所有学科公式（数学物理化学经济等）,一定要使用LaTeX输出,并使用"$...$"格式包围(我将使用katex处理),不需要换行'
+            formula = '如果对话中存在的所有学科公式（数学物理化学经济等）,一定要使用LaTeX输出,并使用"$...$"格式包围(我将使用katex处理),不需要换行'
 
             # 删除掉imageUrl再上传api 因为imageUrl是我自定义的数组 并修改成openai格式
             # _conversation = [{key: value for key, value in message.items() if key != 'imageUrl'} for message in
