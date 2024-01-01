@@ -70,7 +70,7 @@ special_instructions = {
     'gpt-writing-1.0': [
         {
             'role': 'user',
-            'content': ('Please create the paragraphs I\'ll that are flagged as AI generated '
+            'content': ('Please generated the paragraphs that are flagged as AI generated '
                         'by applying the following setting: Temperature = 0.5, Presence Penalty = 0.5, '
                         'Frequency Penalty = 0.5. To avoid AI detection and maintain readability, the generated text must '
                         'be coherent, natural, and diverse at a high school student level while minimising any repetitive or '
