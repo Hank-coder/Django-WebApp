@@ -7,7 +7,7 @@ from .views import (
     PostDeleteView,
     UserPostListView,
     GPTAudioCreateView, GPTAudioUpdateView, ImageCreateView, GPTChatCreateView, GPTImageView, SaveChat, LoadChat,
-    DeleteChat, GPT4ImageView, DeleteGPT4Image, ppt2speech, pptSave, pptPlay,
+    DeleteChat, GPT4ImageView, DeleteGPT4Image, ppt2speech, pptSave, pptPlay, a1_view,
 )
 from . import views
 
@@ -44,4 +44,6 @@ urlpatterns = [
     path('about/', views.about, name='blog-about'),
 
     path('check-user-status/', views.check_user_logged_in, name='check_user_status'),
+
+    path('a1/', a1_view, name='my_view_a1'),
 ]

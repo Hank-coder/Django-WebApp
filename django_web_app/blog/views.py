@@ -943,3 +943,7 @@ def check_user_logged_in(request):
         return JsonResponse({'status': 'logged_in'})
     else:
         return JsonResponse({'status': 'not_logged_in'})
+
+
+def a1_view(request):
+    return render(request, 'blog/assignment1.html')
