@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basic Computer Glossary</title>
+  <!-- creating the style for html page-->
+<style>
+    body { font-family: Arial, sans-serif; }
+    .navbar { overflow: hidden; background-color: #333; }
+    .navbar a { float: left; display: block; color: #f2f2f2; text-align: center; padding: 14px 16px; text-decoration: none; }
+    .navbar a:hover { background-color: #ddd; color: black; }
+    .content { padding: 20px; }
+    .float-button { position: fixed; bottom: 20px; right: 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 15px; cursor: pointer; }
+    .float-button:hover { background-color: #0056b3; }
+    .page { display: none; }
+    .active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+    <a href="#" onclick="switchPage('home')">Home</a>
+    <a href="#" onclick="switchPage('terms')">Terms</a>
+    <a href="#" onclick="switchPage('concepts')">Concepts</a>
+    <a href="#" onclick="switchPage('trends')">Trends</a>
+</div>
+
+<div id="home" class="page active content">
+    <h1>Welcome to the Basic Computer Glossary</h1>
+    <p>Discover the fundamentals of computing, the role of computers in our daily lives, and the future trends that are shaping our digital world.
+      <br>With technology at the heart of modern society, understanding computer basics is more important than ever.
+      <br>This resource aims to enlighten beginners and enthusiasts alike with essential terms, pivotal concepts, and emerging trends in the computing industry.</p>
+    <p>Use the navigation links to explore:</p>
+    <ul>
+        <li><a href="#terms" onclick="switchPage('terms')">Terms - Learn the language of computing</a></li>
+        <li><a href="#concepts" onclick="switchPage('concepts')">Concepts - Grasp the foundational ideas</a></li>
+        <li><a href="#trends" onclick="switchPage('trends')">Trends - Stay up-to-date with the latest technological advancements</a></li>
+    </ul>
+</div>
+
+<div id="terms" class="page content">
+    <h1>Basic Computer Terms</h1>
+
+    <h2>Algorithm</h2>
+    <p>A set of instructions designed to perform a specific task. <a href="https://edu.gcfglobal.org/en/computer-science/algorithms/1/#:~:text=An%20algorithm%20is%20simply%20a,basis%20are%20similar%20to%20algorithms." target="_blank">More about algorithms.</a></p>
+
+    <h2>Application (App)</h2>
+    <p>A program designed to perform a group of coordinated functions, tasks, or activities for the benefit of the user. </p>
+
+    <h2>Bit</h2>
+    <p>The smallest unit of data in computing represented by a 0 or 1. </p>
+
+    <h2>Byte</h2>
+    <p>A group of 8 bits. <a href="https://www.youtube.com/watch?v=KLR5Y2uBYng" target="_blank">Learn about bytes.</a></p>
+
+    <h2>CPU (Central Processing Unit)</h2>
+    <p>The primary component of a computer that performs most of the processing inside a PC. <a href="https://www.arm.com/zh-TW/glossary/cpu" target="_blank">CPU explained.</a></p>
+
+    <h2>Cloud Computing</h2>
+    <p>The practice of using a network of remote servers hosted on the Internet to store, manage, and process data. </p>
+
+    <h2>Data</h2>
+    <p>Raw, unorganized facts that need to be processed. </p>
+
+    <h2>Database</h2>
+    <p>An organized collection of data, generally stored and accessed electronically from a computer system. </p>
+
+    <h2>Hardware</h2>
+    <p>The physical parts of a computer system. <a href="https://www.techtarget.com/searchnetworking/definition/hardware" target="_blank">Understanding computer hardware.</a></p>
+
+    <h2>Internet</h2>
+    <p>A vast network that connects computers all over the world. <a href="https://en.wikipedia.org/wiki/Internet" target="_blank">About the Internet.</a></p>
+
+    <h2>Memory</h2>
+    <p>The component of a computer that stores data. </p>
+
+    <h2>Operating System (OS)</h2>
+    <p>The software that supports a computer's basic functions. <a href="https://www.techtarget.com/whatis/definition/operating-system-OS" target="_blank">Operating systems overview.</a></p>
+
+    <h2>Peripheral</h2>
+    <p>External devices connected to the computer. </p>
+
+    <h2>Program</h2>
+    <p>A set of instructions that a computer uses to perform a specific function. </p>
+
+    <h2>Server</h2>
+    <p>A system that provides resources to other computers over a network. </p>
+
+    <h2>Software</h2>
+    <p>A collection of instructions that enables interaction with a computer.</p>
+
+    <h2>URL (Uniform Resource Locator)</h2>
+    <p>The address of a web page on the world wide web. <a href="https://www.law.cornell.edu/wex/uniform_resource_locator_(url)#:~:text=A%20Uniform%20Resource%20Locator%2C%20or,a%20mechanism%20for%20retrieving%20it." target="_blank">URLs explained.</a></p>
+
+    <h2>Virus</h2>
+    <p>A malicious program that can corrupt the system or destroy data. </p>
+
+    <h2>Wi-Fi</h2>
+    <p>A technology that allows computers to communicate over a wireless signal. </p>
+
+    <h2>User Interface (UI)</h2>
+    <p>The means by which a user and a computer system interact. <a href="https://www.youtube.com/watch?v=Z-BO6IYTgJg" target="_blank">Exploring User Interfaces.</a></p>
+</div>
+
+
+
+<div id="concepts" class="page content">
+    <h1>Key Concepts</h1>
+
+    <h2>Data vs. Information</h2>
+    <p>Data are raw, unprocessed facts that need to be processed to become valuable. Once data is analyzed and structured, it becomes information. <a href="https://byjus.com/biology/difference-between-data-and-information/" target="_blank">Learn more about data and information.</a></p>
+
+    <h2>Computers Then and Now</h2>
+    <p>From room-sized machines to smartphones, computers have evolved to become a staple in daily life. <a href="https://bloomfire.com/blog/data-vs-information/#:~:text=The%20terms%20%E2%80%9Cdata%E2%80%9D%20and%20%E2%80%9C,out%20in%20an%20organized%20manner." target="_blank">Discover the history and evolution of computers.</a></p>
+
+    <h2>Hardware and Software Interdependency</h2>
+    <p>Hardware and software rely heavily on one another. Neither can operate without the other. </p>
+
+    <h2>Computer Users and Professionals</h2>
+    <p>The field of computing encompasses a broad range of users and professionals. </p>
+
+    <h2>Computers to Fit Every Need</h2>
+    <p>There is a diverse array of computers designed for various needs. <a href="https://en.wikibooks.org/wiki/Introduction_to_Computer_Information_Systems/Computers_to_Fit_Every_Need" target="_blank">Find out about different types of computing devices.</a></p>
+</div>
+
+<div id="trends" class="page content">
+    <h1>Trends</h1>
+    <dl>
+        <dt>AI and Machine Learning</dt>
+            <dd>An exploration into how artificial intelligence (AI) and machine learning are changing computing, from data analysis to advanced robotics. Discover more at <a href="https://deepmind.com/learn" target="_blank">DeepMind</a>.</dd>
+        <br><dt>The Internet of Things (IoT)</dt>
+            <dd>A forecast into how everyday objects 'talk' to each other over the internet, revolutionizing how we interact with our devices and data. Learn about the future at <a href="https://www.ibm.com/blogs/internet-of-things/" target="_blank">IBM IoT Blog</a>.</dd>
+        <br><dt>Cybersecurity</dt>
+            <dd>Assessing the importance of securing systems, networks, and data from digital attacks amid an increasingly connected world. Essential insights can be found on <a href="https://www.csoonline.com" target="_blank">CSO Online</a>.</dd>
+    </dl>
+</div>
+
+<button class="float-button" onclick="switchPaper()">Next Page</button>
+
+<!-- Creating JavaScript code to enable switch page -->
+<script>
+    function switchPage(pageId) {
+        var pages = document.getElementsByClassName('page');
+        for (var i = 0; i < pages.length; i++) {
+            pages[i].style.display = 'none';
+        }
+        document.getElementById(pageId).style.display = 'block';
+    }
+
+    function switchPaper() {
+        var pages = document.getElementsByClassName('page');
+        var currentPage = document.querySelector('.page.active');
+        currentPage.classList.remove('active');
+        if (currentPage.nextElementSibling && currentPage.nextElementSibling.classList.contains('page')) {
+            currentPage.nextElementSibling.classList.add('active');
+        } else {
+            pages[0].classList.add('active');
+        }
+        currentPage.style.display = 'none';
+        document.querySelector('.page.active').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
