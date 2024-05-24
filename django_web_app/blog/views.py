@@ -441,7 +441,7 @@ class GPTChatCreateView(CreateView):
                 body_data['model'] = 'gpt-3.5'
             if body_data['model'] == 'gpt-4-vision-preview' and (not request.user.is_authenticated):
                 body_data['model'] = 'gpt-3.5'
-            if body_data['model'] in ['gpt-4', 'gpt-4-vision-preview']:
+            if body_data['model'] in ['gpt-4', 'gpt-4o']:
                 # 如果用户是 staff，则直接跳过使用限制检查
                 if request.user.is_staff:
                     pass
@@ -459,13 +459,13 @@ class GPTChatCreateView(CreateView):
                 _conversation = _conversation[-8:]
             # print(_conversation)
             # 定义公式
-            formula = '对话中存在的所有学科公式（数学物理化学经济等）,请使用LaTeX输出,并使用"$...$"格式包围(我将使用katex处理),不需要换行'
+            # formula = '对话中存在的所有学科公式（数学物理化学经济等）,请使用LaTeX输出,并使用"$...$"格式包围(我将使用katex处理),不需要换行'
 
             # 删除掉imageUrl再上传api 因为imageUrl是我自定义的数组 并修改成openai格式
             # _conversation = [{key: value for key, value in message.items() if key != 'imageUrl'} for message in
             #                  _conversation]
             # 检查模型是否为 gpt-4-vision 来决定是否处理 imageUrl
-            if body_data['model'] == 'gpt-4-vision-preview':
+            if body_data['model'] == 'gpt-4o':
                 for message in _conversation:
                     if 'imageUrl' in message:
                         if isinstance(message['imageUrl'], str):
@@ -503,7 +503,7 @@ class GPTChatCreateView(CreateView):
             current_date = datetime.now().strftime("%Y-%m-%d")
             system_message = f'You are ChatGPT also known as ChatGPT, a large language model trained by OpenAI. ' \
                              f'Strictly follow the users instructions.' \
-                             f' Current date: {current_date}' + formula
+                             f' Current date: {current_date}'
 
             extra = []
             query_content = prompt["content"]  # 假设 prompt 已经定义
@@ -522,8 +522,7 @@ class GPTChatCreateView(CreateView):
                     # Create vision messages for the uploaded images
                     # print(prompt)
                     vision_messages = self.create_vision_messages(uploaded_images=uploaded_images,
-                                                                  prompt=prompt['content'],
-                                                                  formula=formula)
+                                                                  prompt=prompt['content'])
                     # Append the vision messages to the conversation
                     conversation = extra + special_instructions[jailbreak] + \
                                    _conversation + [vision_messages]
@@ -532,10 +531,10 @@ class GPTChatCreateView(CreateView):
 
             # 定义最新版本 turbo
             if body_data['model'] == 'gpt-4':
-                body_data['model'] = 'gpt-4-1106-preview'
+                body_data['model'] = 'gpt-4o'
 
             if body_data['model'] == 'gpt-3.5':
-                body_data['model'] = 'gpt-3.5-turbo-1106'
+                body_data['model'] = 'gpt-3.5-turbo-0125'
 
             # print(body_data['model'])
             # 给openai发送请求
@@ -595,10 +594,10 @@ class GPTChatCreateView(CreateView):
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
-    def create_vision_messages(self, uploaded_images, prompt, formula):
+    def create_vision_messages(self, uploaded_images, prompt):
         # Start with the text prompt
         message_content = [
-            {"type": "text", "text": 'Strictly follow the users instructions: ' + prompt + ' ' + formula}]
+            {"type": "text", "text": 'Strictly follow the users instructions: ' + prompt }]
 
         # Add each image to the message content
         for image_path in uploaded_images:
