@@ -202,8 +202,8 @@ async function setupModelDropdown() {
     let loggedIn = await isUserLoggedIn();
 
     let modelDropdown = document.getElementById('model');
-    let gpt4Option = document.querySelector('#model option[value="gpt-4"]');
-    let gpt4VisionOption = document.querySelector('#model option[value="gpt-4-vision-preview"]');
+    let gpt4Option = document.querySelector('#model option[value="gpt-4o"]');
+    let gpt4VisionOption = document.querySelector('#model option[value="gpt-4-turbo"]');
     if (!loggedIn && gpt4Option && gpt4VisionOption) {
         gpt4Option.disabled = true;
         gpt4VisionOption.disabled = true;
@@ -233,7 +233,8 @@ document.getElementById('message-input').addEventListener('paste', function(e) {
 });
 
 function cropAndSendImage() {
-    const gpt4VisionOption = document.querySelector('#model option[value="gpt-4-vision-preview"]');
+    const gpt4VisionOption = document.querySelector('#model option[value="gpt-4-turbo"]');
+      let gpt4Option = document.querySelector('#model option[value="gpt-4o"]');
     const modal = document.getElementById('loading-modal');
     const modalMessage = document.getElementById('modal-message');
     const modalClose = document.querySelector('.modal-close');
@@ -244,7 +245,7 @@ function cropAndSendImage() {
         modal.style.display = "none";
     }
 
-    if (cropper && gpt4VisionOption.selected) {
+    if (cropper && (gpt4VisionOption.selected || gpt4Option.selected)) {
         // 获取裁剪后的canvas
         const canvas = cropper.getCroppedCanvas();
         // 提交form要csrfToken

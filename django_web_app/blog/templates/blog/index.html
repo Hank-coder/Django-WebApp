@@ -85,6 +85,20 @@
                 transition: background-color 0.3s;
             }
 
+             #login-main{
+                position: fixed;
+                bottom: 10px;
+                right: 100px;
+                padding: 5px 10px;
+                background-color: orange;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+                transition: background-color 0.3s;
+            }
+
             #back-to-home:hover {
                 background-color: #2d4373; /* 或者你喜欢的任何颜色 */
             }
@@ -200,11 +214,13 @@
                     <br>
                     <div class="info">
                         <span class="convo-title">
-                            版本: 1.1.0<br>
-                            Update: 2024/05/24<br>
-                            问题请私信肥猫 新增支持GPT-4o<br><br>
+                            版本: 2.1.0<br>
+                            Update: 2024/07/2<br>
+                            问题请私信肥猫 支持全系列GPT-4<br><br>
 
-                            请节约成本：日常使用3.5模型 学术使用4.0模型<br>
+                            请节约成本：日常使用4o-mini模型 学术使用4o模型
+                            <br>
+                            Turbo/4o模型需登入使用<br>
                             <button id="cloudDataButton" data-login-url="{% url 'login' %}">
                                 <i class="fa-regular fa-circle-info">请登录</i></button>
                         </span>
@@ -244,7 +260,7 @@
                         <img src="{% static 'index/img/upload.png' %}" alt="Upload" width="24" class="upload-icon" onclick="triggerFileInput();" />
                         <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="previewImage(this)" />
 
-                        <textarea id="message-input" placeholder="请输入您的问题 图片输入请选择GPT4-Vision模型 点击左侧按钮或直接粘贴图片" cols="30" rows="10" style="white-space: pre-wrap;" oninput="resizeTextarea(this)"></textarea>
+                        <textarea id="message-input" placeholder="输入您的问题 图片输入请选择GPT-4o/Turbo模型 点击左侧按钮或直接粘贴图片" cols="30" rows="10" style="white-space: pre-wrap;" oninput="resizeTextarea(this)"></textarea>
                         <div id="send-button">
                             <i class="fa-regular fa-paper-plane-top"></i>
                         </div>
@@ -259,9 +275,9 @@
                     <div class="field">
                         模型选择：
                         <select name="model" id="model">
-                            <option value="gpt-3.5" selected>gpt-3.5</option>
-                            <option value="gpt-4">gpt-4</option>
-                            <option value="gpt-4-vision-preview">gpt-4o</option>
+                            <option value="gpt-4o-mini" selected>gpt-4o-mini</option>
+                            <option value="gpt-4o">gpt-4o</option>
+                            <option value="gpt-4-turbo">gpt-4-turbo</option>
                         </select>
                         <!-- <span class="about">Model</span> -->
                     </div>
@@ -303,7 +319,13 @@
         <div class="mobile-sidebar">
             <i class="fa-solid fa-bars"></i>
         </div>
-    <!-- 新增的按钮 -->
+
+     {% if not user.is_authenticated %} <!-- 如果用户未登录 -->
+             <button id="login-main" onclick="window.location.href = `{% url 'login' %}`;">
+                    登录
+            </button>
+    {% endif %}
+
     <button id="back-to-home" onclick="window.location.href = `{% url 'blog-home' %}`;">
         返回主页
     </button>

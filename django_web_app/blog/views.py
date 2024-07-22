@@ -437,11 +437,11 @@ class GPTChatCreateView(CreateView):
             body_data = loads(body_unicode)  # 获取所有Body信息
 
             # 检查权限
-            if body_data['model'] == 'gpt-4' and (not request.user.is_authenticated):
-                body_data['model'] = 'gpt-3.5'
-            if body_data['model'] == 'gpt-4-vision-preview' and (not request.user.is_authenticated):
-                body_data['model'] = 'gpt-3.5'
-            if body_data['model'] in ['gpt-4', 'gpt-4o']:
+            if body_data['model'] == 'gpt-4o' and (not request.user.is_authenticated):
+                body_data['model'] = 'gpt-4o-mini'
+            if body_data['model'] == 'gpt-4-turbo' and (not request.user.is_authenticated):
+                body_data['model'] = 'gpt-4o-mini'
+            if body_data['model'] in ['gpt-4-turbo', 'gpt-4o']:
                 # 如果用户是 staff，则直接跳过使用限制检查
                 if request.user.is_staff:
                     pass
@@ -450,13 +450,13 @@ class GPTChatCreateView(CreateView):
                     pass
                 else:
                     # 如果用户超过了使用限制，更改模型为 GPT-3.5
-                    body_data['model'] = 'gpt-3.5'
+                    body_data['model'] = 'gpt-4o-mini'
 
             jailbreak = body_data['jailbreak']
             internet_access = body_data['meta']['content']['internet_access']
             _conversation = body_data['meta']['content']['conversation']
             if not request.user.is_staff:
-                _conversation = _conversation[-8:]
+                _conversation = _conversation[-10:]
             # print(_conversation)
             # 定义公式
             # formula = '对话中存在的所有学科公式（数学物理化学经济等）,请使用LaTeX输出,并使用"$...$"格式包围(我将使用katex处理),不需要换行'
@@ -465,7 +465,24 @@ class GPTChatCreateView(CreateView):
             # _conversation = [{key: value for key, value in message.items() if key != 'imageUrl'} for message in
             #                  _conversation]
             # 检查模型是否为 gpt-4-vision 来决定是否处理 imageUrl
-            if body_data['model'] == 'gpt-4o':
+            if body_data['model'] in ['gpt-4o', 'gpt-4-turbo']:
+
+                uploaded_images = body_data['meta']['content']['uploaded_images']
+                # print(uploaded_images)
+                image_content_list = [{"type": "text", "text": "Here are the images for you."}]
+
+                for image_path in uploaded_images:
+                    full_path = os.path.join(settings.MEDIA_ROOT, image_path)
+                    image_data = self.encode_image(full_path)
+                    image_dict = {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/png;base64,{image_data}"
+                        }
+                    }
+                    image_content_list.append(image_dict)  # Append to the list
+
+                # 遍历以前的信息
                 for message in _conversation:
                     if 'imageUrl' in message:
                         if isinstance(message['imageUrl'], str):
@@ -485,7 +502,7 @@ class GPTChatCreateView(CreateView):
                                 image_dict = {
                                     "type": "image_url",
                                     "image_url": {
-                                        "url": f"data:image/jpeg;base64,{base64_image}"
+                                        "url": f"data:image/png;base64,{base64_image}"
                                     }
                                 }
                                 content_list.append(image_dict)
@@ -494,10 +511,11 @@ class GPTChatCreateView(CreateView):
                             del message['imageUrl']
 
             else:
-                # 如果模型是 gpt-4 或 gpt-3.5-turbo, 移除所有 imageUrl 键
-                for message in _conversation:
-                    if 'imageUrl' in message:
-                        del message['imageUrl']
+                # gpt-3.5, 移除所有 imageUrl 键
+                if body_data['model'] != "gpt-4o-mini":
+                    for message in _conversation:
+                        if 'imageUrl' in message:
+                            del message['imageUrl']
 
             prompt = body_data['meta']['content']['parts'][0]
             current_date = datetime.now().strftime("%Y-%m-%d")
@@ -511,30 +529,37 @@ class GPTChatCreateView(CreateView):
             result_count = 3
             extra = fetch_search_results(query_content, internet_access, result_count)  # 联网搜索
 
-            conversation = [{'role': 'system', 'content': system_message}] + \
-                           extra + special_instructions[jailbreak] + \
-                           _conversation + [prompt]
+            if body_data['model'] in ['gpt-4-turbo', 'gpt-4o']:
+                conversation = [{'role': 'system', 'content': system_message}] + \
+                               [{'role': 'user', 'content':  image_content_list}] + \
+                               extra + special_instructions[jailbreak] + \
+                               _conversation + [prompt]
+            else:
+                conversation = [{'role': 'system', 'content': system_message}] + \
+                               extra + special_instructions[jailbreak] + \
+                                       _conversation + [prompt]
 
-            # Check if the model is for vision and images have been uploaded
-            if body_data['model'] == 'gpt-4-vision-preview':
-                uploaded_images = body_data['meta']['content']['uploaded_images']
-                if uploaded_images:
-                    # Create vision messages for the uploaded images
-                    # print(prompt)
-                    vision_messages = self.create_vision_messages(uploaded_images=uploaded_images,
-                                                                  prompt=prompt['content'])
-                    # Append the vision messages to the conversation
-                    conversation = extra + special_instructions[jailbreak] + \
-                                   _conversation + [vision_messages]
+            # 已经淘汰
+            # # Check if the model is for vision and images have been uploaded
+            # if body_data['model'] == 'gpt-4-vision-preview':
+            #     uploaded_images = body_data['meta']['content']['uploaded_images']
+            #     if uploaded_images:
+            #         # Create vision messages for the uploaded images
+            #         # print(prompt)
+            #         vision_messages = self.create_vision_messages(uploaded_images=uploaded_images,
+            #                                                       prompt=prompt['content'])
+            #         # Append the vision messages to the conversation
+            #         conversation = extra + special_instructions[jailbreak] + \
+            #                        _conversation + [vision_messages]
             # print(conversation)
             url = f"{self.openai_api_base}/v1/chat/completions"
 
-            # 定义最新版本 turbo
-            if body_data['model'] == 'gpt-4':
-                body_data['model'] = 'gpt-4o'
-
-            if body_data['model'] == 'gpt-3.5':
-                body_data['model'] = 'gpt-3.5-turbo-0125'
+            # # 定义最新版本 turbo
+            # if body_data['model'] == 'gpt-4':
+            #     body_data['model'] = 'gpt-4o'
+            #
+            # if body_data['model'] == 'gpt-3.5':
+            #     body_data['model'] = 'gpt-3.5-turbo-0125'
 
             # print(body_data['model'])
             # 给openai发送请求
@@ -597,7 +622,7 @@ class GPTChatCreateView(CreateView):
     def create_vision_messages(self, uploaded_images, prompt):
         # Start with the text prompt
         message_content = [
-            {"type": "text", "text": 'Strictly follow the users instructions: ' + prompt }]
+            {"type": "text", "text": 'Strictly follow the users instructions: ' + prompt}]
 
         # Add each image to the message content
         for image_path in uploaded_images:
