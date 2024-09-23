@@ -520,8 +520,7 @@ class GPTChatCreateView(CreateView):
             prompt = body_data['meta']['content']['parts'][0]
             current_date = datetime.now().strftime("%Y-%m-%d")
             system_message = f'You are ChatGPT also known as ChatGPT, a large language model trained by OpenAI. ' \
-                             f'Strictly follow the users instructions.' \
-                             f' Current date: {current_date}'
+                             f'Strictly follow the instruction below:'
 
             extra = []
             query_content = prompt["content"]  # 假设 prompt 已经定义
