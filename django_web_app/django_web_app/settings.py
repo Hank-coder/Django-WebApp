@@ -25,9 +25,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['imageword.site', 'www.imageword.site',
+ALLOWED_HOSTS = ['cyhank.com', 'www.cyhank.com',
                     'aichatting.top', 'www.aichatting.top',
                   '127.0.0.1', '47.236.15.187']
+
 
 
 # 服务器端Https启用
@@ -96,9 +97,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'webdata',
-        'USER': 'root',
+        'USER': 'webdata',
         'PASSWORD': '!@cyh1qw23er45T',
-        'HOST': '1.12.229.115',  # Set to the address of your MySQL server
+        'HOST': '117.72.96.19',  # Set to the address of your MySQL server
         'PORT': '3306',  # Default MySQL port
         'OPTIONS': {
             'charset': 'utf8mb4',
@@ -140,10 +141,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 # 如果您的静态文件不在app的默认static文件夹下，您需要设置 STATICFILES_DIRS 以指向它们
-# STATICFILES_DIRS = [os.path.join(BASE_DIR, "static"), ]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static"), ]
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'

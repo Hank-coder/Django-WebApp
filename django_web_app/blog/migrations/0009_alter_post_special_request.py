@@ -10,14 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='post_photo_category',  # 请将NewTableName更改为你的模型名称
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('post_id', models.BigIntegerField()),
-                ('category_id', models.BigIntegerField()),
-            ],
-        ),
         migrations.AlterField(
             model_name="post",
             name="special_request",
