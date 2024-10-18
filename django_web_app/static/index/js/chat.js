@@ -4,6 +4,7 @@ const query = (obj) =>
     .join("&");
 const colorThemes = document.querySelectorAll('[name="theme"]');
 //const markdown = window.markdownit();
+//katex解析公式
 const markdown = markdownit({html:true})
                       .use(texmath, { engine: katex,
                                       delimiters: 'dollars',

@@ -419,6 +419,7 @@ def convert_string_to_list(image_url_str):
 
 
 # 不登陆也能访问
+# GPT 基础功能！
 class GPTChatCreateView(CreateView):
     model = PostAudio
     template_name = 'blog/index.html'
