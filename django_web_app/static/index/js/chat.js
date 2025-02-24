@@ -916,14 +916,13 @@ const load_conversations = async (limit, offset, loader) => {
     box_conversations.innerHTML += `
       <div class="convo" id="convo-${conversation.id}">
         <div class="left" onclick="set_conversation('${conversation.id}')">
-          <i class="fa-regular fa-comments"></i>
-          <span class="convo-title">${conversation.title}</span>
+          🗨️ <span class="convo-title">${conversation.title}</span>
         </div>
-        <i onclick="show_option('${conversation.id}')" class="fa-regular fa-trash" id="conv-${conversation.id}"></i>
-        <i onclick="delete_conversation('${conversation.id}')" class="fa-regular fa-check" id="yes-${conversation.id}" style="display:none;"></i>
-        <i onclick="hide_option('${conversation.id}')" class="fa-regular fa-x" id="not-${conversation.id}" style="display:none;"></i>
+        <span onclick="show_option('${conversation.id}')" id="conv-${conversation.id}">🗑️</span>
+        <span onclick="delete_conversation('${conversation.id}')" id="yes-${conversation.id}" style="display:none;">✔️</span>
+        <span onclick="hide_option('${conversation.id}')" id="not-${conversation.id}" style="display:none;">❌</span>
       </div>`;
-  }
+ }
 
   document.querySelectorAll(`code`).forEach((el) => {
     hljs.highlightElement(el);
