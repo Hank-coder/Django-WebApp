@@ -192,8 +192,12 @@ def get_apikey(openai):
     return str(api_key)
 
 
-def fetch_search_results(query, internet_access=True, result_count=3):
+def get_apikey_dp():
+    api_key = os.environ.get('DP_API_KEY')
+    return str(api_key)
 
+
+def fetch_search_results(query, internet_access=True, result_count=3):
     if internet_access:
         print("Bing Connected")
         api_key = os.environ.get('BING_API_KEY')

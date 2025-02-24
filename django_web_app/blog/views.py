@@ -37,7 +37,7 @@ from .functions.detectVoice.audio2text import gpt_audio_response, gpt_text_respo
 from .functions.gpt_generate import generate_image
 from .functions.image2text import generate_text
 from .functions.ppt2script.ppt_script_gen import summarize_layout, auto_summary_ppt, auto_summary_ppt_page, load_json
-from .functions.utils import get_apikey, fetch_search_results
+from .functions.utils import get_apikey, fetch_search_results, get_apikey_dp
 from .models import Post, Category, PostAudio, ChatMessage, Conversation, DailyUsage
 import operator
 from django.urls import reverse_lazy, reverse
@@ -512,11 +512,10 @@ class GPTChatCreateView(CreateView):
                             del message['imageUrl']
 
             else:
-                # gpt-3.5, 移除所有 imageUrl 键
-                if body_data['model'] != "gpt-4o-mini":
-                    for message in _conversation:
-                        if 'imageUrl' in message:
-                            del message['imageUrl']
+                # 移除所有 imageUrl 键
+                for message in _conversation:
+                    if 'imageUrl' in message:
+                        del message['imageUrl']
 
             prompt = body_data['meta']['content']['parts'][0]
             current_date = datetime.now().strftime("%Y-%m-%d")
@@ -531,13 +530,13 @@ class GPTChatCreateView(CreateView):
 
             if body_data['model'] in ['gpt-4-turbo', 'gpt-4o']:
                 conversation = [{'role': 'system', 'content': system_message}] + \
-                               [{'role': 'user', 'content':  image_content_list}] + \
+                               [{'role': 'user', 'content': image_content_list}] + \
                                extra + special_instructions[jailbreak] + \
                                _conversation + [prompt]
             else:
                 conversation = [{'role': 'system', 'content': system_message}] + \
                                extra + special_instructions[jailbreak] + \
-                                       _conversation + [prompt]
+                               _conversation + [prompt]
 
             # 已经淘汰
             # # Check if the model is for vision and images have been uploaded
@@ -552,7 +551,6 @@ class GPTChatCreateView(CreateView):
             #         conversation = extra + special_instructions[jailbreak] + \
             #                        _conversation + [vision_messages]
             # print(conversation)
-            url = f"{self.openai_api_base}/v1/chat/completions"
 
             # # 定义最新版本 turbo
             # if body_data['model'] == 'gpt-4':
@@ -563,48 +561,110 @@ class GPTChatCreateView(CreateView):
 
             # print(body_data['model'])
             # 给openai发送请求
-            gpt_resp = post(
-                url=url,
-                headers={
-                    'Authorization': f'Bearer {self.openai_key}'
-                },
-                json={
-                    'model': body_data['model'],
-                    'messages': conversation,
-                    'stream': True,
-                    "max_tokens": 2048
-                },
-                stream=True
-            )
+            # gpt_resp = post(
+            #     url=url,
+            #     headers={
+            #         'Authorization': f'Bearer {self.openai_key}'
+            #     },
+            #     json={
+            #         'model': body_data['model'],
+            #         'messages': conversation,
+            #         'stream': True,
+            #         "max_tokens": 2048
+            #     },
+            #     stream=True
+            # )
 
-            if gpt_resp.status_code >= 400:
-                error_data = gpt_resp.json().get('error', {})
-                error_code = error_data.get('code', None)
-                error_message = error_data.get('message', "An error occurred")
-                return JsonResponse({
-                    'success': False,
-                    'error_code': error_code,
-                    'message': error_message,
-                    'status_code': gpt_resp.status_code
-                }, status=gpt_resp.status_code)
+            url = f"{self.openai_api_base}/v1/chat/completions"
+            # 给Deepseek处理请求
+            deep_seek_api = get_apikey_dp()
+            url2 = "https://api.siliconflow.cn/v1"
 
-            def stream():  # 流传输
-                for chunk in gpt_resp.iter_lines():
-                    try:
-                        decoded_line = loads(chunk.decode("utf-8").split("data: ")[1])
-                        token = decoded_line["choices"][0]['delta'].get('content')
+            # Deepseek处理
+            if body_data['model'] == 'deepseek-r1':
+                client = OpenAI(api_key=deep_seek_api, base_url=url2)
+                gpt_resp = client.chat.completions.create(
+                    model="deepseek-ai/DeepSeek-R1",
+                    messages=conversation,
+                    stream=True
+                )
 
-                        if token is not None:
-                            yield token
+                # 流式响应处理
+                def event_stream():
+                    reasoning_buffer = []  # 存储思考过程
+                    result_buffer = []  # 存储最终结果
+                    ans = False
 
-                    except GeneratorExit:
-                        break
+                    for chunk in gpt_resp:
+                        delta = chunk.choices[0].delta
 
-                    except Exception as e:
-                        # print(e)
-                        continue
+                        # 处理思考过程
+                        if hasattr(delta, 'reasoning_content') and delta.reasoning_content:
+                            reasoning_buffer.append(delta.reasoning_content)
+                            # 实时发送思考过程
+                            yield f"{delta.reasoning_content}"
 
-            return StreamingHttpResponse(stream(), content_type='text/event-stream')
+                        # 处理最终结果
+                        if hasattr(delta, 'content') and delta.content:
+                            result_buffer.append(delta.content)
+                            # 如果有缓存的思考过程，先发送
+                            if reasoning_buffer:
+                                full_reasoning = "".join(reasoning_buffer)
+                                yield f"{full_reasoning}"
+                                reasoning_buffer = []  # 清空缓存
+                            # 在发送最终结果时，在 content 前加入 "ANSWER:" 换行
+                            if not ans:
+                                yield "\n\n\n\n\n***Answer***:\n\n\n\n" + f"{delta.content}"
+                                ans = True
+                            else:
+                                yield f"{delta.content}"
+
+                return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+            # OpenAI处理
+            else:
+                gpt_resp = post(
+                    url=url,
+                    headers={
+                        'Authorization': f'Bearer {self.openai_key}'
+                    },
+                    json={
+                        'model': body_data['model'],
+                        'messages': conversation,
+                        'stream': True,
+                        "max_tokens": 2048
+                    },
+                    stream=True
+                )
+
+                if gpt_resp.status_code >= 400:
+                    error_data = gpt_resp.json().get('error', {})
+                    error_code = error_data.get('code', None)
+                    error_message = error_data.get('message', "An error occurred")
+                    return JsonResponse({
+                        'success': False,
+                        'error_code': error_code,
+                        'message': error_message,
+                        'status_code': gpt_resp.status_code
+                    }, status=gpt_resp.status_code)
+
+                def stream():  # 流传输
+                    for chunk in gpt_resp.iter_lines():
+                        try:
+                            decoded_line = loads(chunk.decode("utf-8").split("data: ")[1])
+                            token = decoded_line["choices"][0]['delta'].get('content')
+
+                            if token is not None:
+                                yield token
+
+                        except GeneratorExit:
+                            break
+
+                        except Exception as e:
+                            # print(e)
+                            continue
+
+                return StreamingHttpResponse(stream(), content_type='text/event-stream')
+
 
         except Exception as e:
             print(e)
