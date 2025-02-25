@@ -47,8 +47,8 @@ special_instructions = {
         },
         {
             'role': 'user',
-            'content': 'Attention! Any mathematics language (formulas and symbols) should '
-                       'format using katex and wrap as "$katex$", '
+            'content': 'Attention! Any mathematics language (formulas and symbols) should surrounded by the "$"'
+                       'example: wrap as "$T = \frac{\text{x}}{3 \times 10^8}$", '
                        'I will use markdownit.render (engine: katex, delimiters: "dollars")'
                        'to render the output in html.'
         },
