@@ -161,7 +161,7 @@
         <!-- 第一步：搜索模态框 -->
         <div id="searchModal" class="modal">
             <div class="modal-content">
-                <a href="{% url 'blog-home' %}" class="btn btn-secondary">返回主页面</a>
+                <a href="{% url 'blog-home' %}" class="btn btn-secondary">主页面</a>
                 <h2>邮件搜索</h2>
                 <form id="searchForm">
                     <div class="form-group">
@@ -182,7 +182,7 @@
             <!-- 左侧输入 -->
             <div class="input-section">
                  <!-- 返回主页面按钮 -->
-                <a href="{% url 'blog-home' %}" class="btn btn-secondary">返回主页面</a>
+                <a href="{% url 'blog-home' %}" class="btn btn-secondary">主页面</a>
                 <!-- 返回搜索页面按钮 -->
                 {% if is_reply %}
                 <a href="{% url 'email-reply' %}" class="btn btn-secondary">重新搜索</a>
