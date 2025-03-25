@@ -981,7 +981,7 @@ class ImageCreateView(LoginRequiredMixin, CreateView):
 
 """自动生成邮件"""
 @method_decorator(csrf_exempt, name='dispatch')
-class EmailGeneralView(LoginRequiredMixin, CreateView):
+class EmailGeneralView(CreateView):
     template_name = 'blog/email_reply.html'
     # 网页只是显示表单
     def get(self, request, *args, **kwargs):
@@ -1048,7 +1048,7 @@ class EmailReplyView(LoginRequiredMixin, CreateView):
 
 # 传输生成的Email
 @method_decorator(csrf_exempt, name='dispatch')
-class EmailGenerate(LoginRequiredMixin, CreateView):
+class EmailGenerate(CreateView):
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
@@ -1056,7 +1056,10 @@ class EmailGenerate(LoginRequiredMixin, CreateView):
             return JsonResponse({'error': '无效的JSON数据'}, status=400)
 
         user_id = request.session.get('_auth_user_id')
-        content = summary_infor(data, user_id= user_id)
+        if user_id:
+            content = summary_infor(data, user_id= user_id)
+        else:
+            content = summary_infor(data)
 
         # 在这里根据传入参数生成邮件主题和正文，可以调用相关算法或调用AI服务
 

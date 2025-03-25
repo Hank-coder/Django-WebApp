@@ -392,7 +392,6 @@
 
                 const result = await response.json();
                 renderEmailPreview(result);
-                {#复制按钮激活#}
                 document.getElementById("copyButton").style.display = "block";
             } catch (error) {
                 alert("生成失败：" + error.message);

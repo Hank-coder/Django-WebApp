@@ -142,10 +142,12 @@ def get_relate_emails(user_email, password, contact_email, subject_keyword):
         return related_email_infor
 
 
-def summary_infor(email_data, user_id):
+def summary_infor(email_data, user_id = -1):
     # 从数据库获取当前用户的 email 信息
-    email_acc = EmailAccount.objects.get(user_id=user_id)
-    user_email = email_acc.email
+    user_email = 'No provide'
+    if user_id != -1:
+        email_acc = EmailAccount.objects.get(user_id=user_id)
+        user_email = email_acc.email
 
     # 获取信息
     fetch_emails = email_data.get('email_data')
