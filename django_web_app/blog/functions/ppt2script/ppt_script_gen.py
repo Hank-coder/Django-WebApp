@@ -6,7 +6,7 @@ import json
 from openai import OpenAI
 from pptx import Presentation
 
-from ..utils import get_apikey
+from ..utils import get_apikey, gpt_api
 
 
 def load_json(fdirname):
@@ -139,27 +139,6 @@ def read_ppt(slide):
 
     return res
 
-
-def callGPT_API(messages):
-    import openai
-    get_apikey(openai)
-    client = OpenAI()
-    itry = 0
-    while itry < 3:
-        try:
-            response = client.chat.completions.create(model="gpt-4-1106-preview",
-                                                      messages=[{'role': 'user', 'content': messages}])
-
-            return response.choices[0].message.content.strip()
-        except:
-            print(traceback.format_exc())
-            time.sleep(1)
-            itry += 1
-            print('error occered in call gpt, tried {} times'.format(itry))
-            pass
-    return 'errored too many times???'
-
-
 def auto_summary_ppt(background, save_path, sentence_cnt, use_paid_API=False):
     content_str_lst = load_json(f'{save_path}/layouts.json')
     speech_texts = ''
@@ -206,7 +185,7 @@ Please generate the current page speech script now. Please directly write result
            sentence_cnt,
            sentence_cnt,
            )
-        new_gen = callGPT_API(prompt) if use_paid_API else ''
+        new_gen = gpt_api(prompt) if use_paid_API else ''
         save_txt(prompt, f'{save_path}/prompt-{page}.txt')
         speech_texts = speech_texts + '\n-------------\nPage {} / {}:\n'.format(page + 1,
                                                                                 len(content_str_lst)) + new_gen
@@ -261,7 +240,7 @@ def auto_summary_ppt_page(background, content_str_lst, page, save_path, sentence
                )
 
     # Generate the current page speech script
-    new_gen = callGPT_API(prompt) if use_paid_API else "Mocked response for current page."
+    new_gen = gpt_api(prompt) if use_paid_API else "Mocked response for current page."
 
     # Save the prompt if needed
     save_txt(prompt, f'{save_path}/prompt-{page}.txt')

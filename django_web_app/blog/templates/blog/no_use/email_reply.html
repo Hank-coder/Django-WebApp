@@ -1,0 +1,361 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能邮件助手</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --background: #f5f6fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--background);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 400px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        /* 主界面布局 */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        /* 输入区域 */
+        .input-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .required::after {
+            content: "*";
+            color: #e74c3c;
+            margin-left: 4px;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        /* 结果区域 */
+        .result-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: var(--secondary-color);
+        }
+
+         textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-divider {
+            margin: 25px 0;
+            border-top: 1px solid #eee;
+        }
+
+        .preview-content {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 第一步：搜索模态框 -->
+        <div id="searchModal" class="modal">
+            <div class="modal-content">
+                <h2>邮件搜索</h2>
+                <form id="searchForm">
+                    <div class="form-group">
+                        <label for="searchEmail">收件人邮箱</label>
+                        <input type="email" id="searchEmail" name="searchEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="searchKeyword">主题关键词</label>
+                        <input type="text" id="searchKeyword" name="searchKeyword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">搜索</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 主界面 -->
+        <div class="main-layout" style="display: none;" id="mainLayout">
+            <!-- 左侧输入 -->
+            <div class="input-section">
+                <h2>邮件配置 <i class="fas fa-cog"></i></h2>
+                <form id="emailForm">
+                    <div class="form-group">
+                        <label class="required">语言</label>
+                        <select id="language" required>
+                            <option value="en">English</option>
+                            <option value="cn" selected>中文</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required">风格</label>
+                        <select id="style" required>
+                            <option value="formal">正式</option>
+                            <option value="concise">简洁</option>
+                            <option value="humorous">风趣</option>
+                        </select>
+                    </div>
+
+                    <div class="form-divider"></div>
+
+                    <div class="form-group">
+                        <label class="required">邮件目的</label>
+                        <textarea id="purpose" placeholder="请详细描述邮件的主要目的..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>发送者身份</label>
+                        <input type="text" id="senderRole" placeholder="例如：市场部经理">
+                    </div>
+
+                    <div class="form-group">
+                        <label>接受者身份</label>
+                        <input type="text" id="receiverRole" placeholder="例如：合作客户">
+                    </div>
+
+                    <div class="form-divider"></div>
+
+                    <div class="form-group">
+                        <label>其他要求</label>
+                        <textarea id="additionalReq" placeholder="例如：需要包含会议时间、公司地址等信息"></textarea>
+                    </div>
+
+                </form>
+                <button class="btn btn-primary" onclick="generateEmail()">生成邮件</button>
+            </div>
+
+            <!-- 右侧结果 -->
+            <div class="result-section">
+                <h2>邮件预览 <i class="fas fa-envelope"></i></h2>
+                <div id="emailPreview"></div>
+                <button class="btn btn-primary" onclick="sendEmail()" style="margin-top: 20px;">发送邮件</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner fa-spin"></i> 处理中...
+        </div>
+    </div>
+
+    <script>
+        // 初始化显示搜索模态框，并绑定搜索表单提交事件
+        window.onload = () => {
+            document.getElementById('searchModal').style.display = 'flex';
+            document.getElementById('searchForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // 阻止表单默认提交
+                handleSearch();
+            });
+        };
+
+       async function handleSearch() {
+            const email = document.getElementById('searchEmail').value;
+            const keyword = document.getElementById('searchKeyword').value;
+
+            // 调用后端搜索接口
+            const response = await fetch('/email/search/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, keyword })
+            });
+
+            const result = await response.json();
+
+            if (result.exists) {
+                const { subject, timestamp } = result;  // 假设后端返回了 subject 和 timestamp（时间戳）
+
+                const emailDetails = `邮件主题: ${subject}\n邮件时间: ${timestamp}`;
+                const userConfirmed = confirm(`找到匹配邮件:\n${emailDetails}\n\n是否继续？`);
+
+                if (userConfirmed) {
+                    document.getElementById('searchModal').style.display = 'none';
+                    document.getElementById('mainLayout').style.display = 'grid';
+                } else {
+                    // 如果用户取消，清空搜索框并保持在当前界面
+                    document.getElementById('searchEmail').value = '';
+                    document.getElementById('searchKeyword').value = '';
+                }
+            } else {
+                alert("未找到匹配邮件");
+                // 返回到搜索界面
+                document.getElementById('searchEmail').value = '';
+                document.getElementById('searchKeyword').value = '';
+            }
+        }
+
+        async function generateEmail() {
+            showLoading();
+
+            // 收集所有表单数据
+            const formData = {
+                email: document.getElementById('searchEmail').value,
+                language: document.getElementById('language').value,
+                style: document.getElementById('style').value,
+                purpose: document.getElementById('purpose').value,
+                senderRole: document.getElementById('senderRole').value,
+                receiverRole: document.getElementById('receiverRole').value,
+                additionalReq: document.getElementById('additionalReq').value
+            };
+
+            // 前端验证
+            if (!formData.purpose) {
+                alert("请填写邮件目的");
+                hideLoading();
+                return;
+            }
+
+            try {
+                const response = await fetch('/email/generate/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                renderEmailPreview(result);
+            } catch (error) {
+                alert("生成失败：" + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+         // 预览渲染函数
+        function renderEmailPreview(data) {
+            const previewDiv = document.getElementById('emailPreview');
+            previewDiv.innerHTML = `
+                <div class="form-group">
+                    <label>收件人</label>
+                    <input type="email" id="finalEmail" value="${data.email}">
+                </div>
+                <div class="form-group">
+                    <label>主题</label>
+                    <input type="text" id="finalSubject" value="${data.subject}">
+                </div>
+                <div class="form-group">
+                    <label>内容</label>
+                    <div class="preview-content" contenteditable="true" id="finalContent">${data.content}</div>
+                </div>
+            `;
+        }
+
+        async function sendEmail() {
+            const finalData = {
+                email: document.getElementById('finalEmail').value,
+                subject: document.getElementById('finalSubject').value,
+                content: document.getElementById('finalContent').value
+            };
+
+            await fetch('/api/send/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(finalData)
+            });
+
+            alert("邮件发送成功！");
+            location.reload();
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

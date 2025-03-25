@@ -4,47 +4,38 @@
 
 import base64
 import json
-import re
 import shutil
 from urllib.parse import unquote
 
 import openai
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.storage import FileSystemStorage
-from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, HttpResponseRedirect, HttpResponseBadRequest, \
+from django.shortcuts import render
+from django.http import JsonResponse, StreamingHttpResponse, HttpResponseBadRequest, \
     FileResponse, HttpResponseNotFound
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.models import User
+from django.contrib.auth.mixins import LoginRequiredMixin
 import os
 from django.conf import settings
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from json import loads, dumps
+from json import loads
 from datetime import datetime, timedelta
 
 from openai import OpenAI
 from pytesseract import pytesseract
-from requests import get, post
+from requests import post
 from django.views.generic import (
     ListView,
-    DetailView,
     CreateView,
-    UpdateView,
     DeleteView
 )
 
 from .chatPages.server.config import special_instructions
-from .functions.detectVoice.audio2text import gpt_audio_response, gpt_text_response
-from .functions.gpt_generate import generate_image
-from .functions.image2text import generate_text
-from .functions.ppt2script.ppt_script_gen import summarize_layout, auto_summary_ppt, auto_summary_ppt_page, load_json
+from .functions.image_audio_generate.gpt_generate import generate_image
+from .functions.ppt2script.ppt_script_gen import summarize_layout, auto_summary_ppt_page, load_json
 from .functions.utils import get_apikey, fetch_search_results, get_apikey_dp
-from .models import Post, Category, PostAudio, ChatMessage, Conversation, DailyUsage
-import operator
-from django.urls import reverse_lazy, reverse
+from .functions.email_reply.email_test import get_relate_emails,summary_infor
+from .models import Category, PostAudio, ChatMessage, Conversation, DailyUsage, EmailAccount
 from django.contrib.staticfiles.views import serve
 
 from django.db.models import Q, F
@@ -53,6 +44,8 @@ from django import forms
 from .models import Post
 from PIL import Image
 import io
+
+from .utils import convert_string_to_list
 
 
 def home(request):
@@ -109,7 +102,7 @@ class PostListView(ListView):
 #     model = Post
 #     template_name = 'blog/post_detail.html'
 
-
+"""PPT 自动演讲"""
 class ppt2speech(CreateView):
     model = Post
     fields = []
@@ -402,28 +395,11 @@ def about(request):
 #             return JsonResponse({"success": False, "error": "Record not found"})
 #         except Exception as e:
 #             return JsonResponse({"success": False, "error": str(e)})
+#
+#     def test_func(self):
+#         return True
 
-    def test_func(self):
-        return True
-
-
-def convert_string_to_list(image_url_str):
-    # 将单引号替换为双引号
-    corrected_str = image_url_str.replace("'", '"')
-    try:
-        # 尝试将修正后的字符串转换为列表
-        image_list = json.loads(corrected_str)
-        # 确保结果是列表
-        if isinstance(image_list, list):
-            return image_list
-    except json.JSONDecodeError:
-        # 如果转换失败，记录错误或进行一些错误处理
-        print("Error: imageUrl is not a valid list in JSON format after correction.")
-        return None
-
-
-# 不登陆也能访问
-# GPT 基础功能！
+"""GPT 问答功能"""
 class GPTChatCreateView(CreateView):
     model = PostAudio
     template_name = 'blog/index.html'
@@ -840,40 +816,13 @@ class DeleteChat(LoginRequiredMixin, CreateView):
 
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
-class ImageCreateView(LoginRequiredMixin, CreateView):
-    template_name = 'blog/image_create.html'
-
-    def get(self, request, *args, **kwargs):
-        return render(request, self.template_name)
-
-    def post(self, request, *args, **kwargs):
-        prompt = request.POST.get('prompt')
-
-        if not prompt:
-            messages.error(request, "Prompt cannot be empty.")
-            return render(request, self.template_name)
-
-        # 使用generate_image函数生成图像并获取保存路径
-        image_path = generate_image(prompt, request.user.username)
-
-        # 为简单起见，只是将图像的路径返回给用户。
-        context = {
-            'image_url': image_path  # 这里假设image_path是一个可以直接访问的URL
-        }
-        return render(request, self.template_name, context)
-        # render是Django的一个核心函数，用于将数据渲染到模板并返回一个HTTP响应。它是Django
-        # 模板系统的一个关键部分，允许您将Python字典中的数据传递到HTML模板，并在模板中显示这些数据。
-
-
 # 入数据库
 # class ImageUploadForm(forms.ModelForm):
 #     class Meta:
 #         model = UploadedImage
 #         fields = ['image']
 
-
+"""GPT 3.5只能文字输入 要图片转文字"""
 class GPTImageView(CreateView):
 
     def get(self, request, *args, **kwargs):
@@ -915,7 +864,7 @@ class GPTImageView(CreateView):
         else:
             return JsonResponse({'status': 'error', 'message': 'Image upload failed!'}, status=400)
 
-
+# GPT4 图片处理
 class GPT4ImageView(LoginRequiredMixin, CreateView):
 
     def post(self, request, *args, **kwargs):
@@ -1000,38 +949,123 @@ class DeleteGPT4Image(LoginRequiredMixin, DeleteView):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+class ImageCreateView(LoginRequiredMixin, CreateView):
+    template_name = 'blog/image_create.html'
 
-def clean_text(text):
-    # 去除换行
-    cleaned_text = text.replace('\n', ' ')
-    # 去除制表符
-    cleaned_text = cleaned_text.replace('\t', ' ')
+    # Django 通过 get 方法渲染并返回 image_create.html
+    # 网页只是显示表单，用户还未提交数据
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+    # 处理表单提交
+    def post(self, request, *args, **kwargs): # 表单提交的获取
+        prompt = request.POST.get('prompt')
 
-    # 如果文本长度小于或等于500，直接返回
-    if len(cleaned_text) <= 1500:
-        return cleaned_text
+        if not prompt:
+            messages.error(request, "Prompt cannot be empty.")
+            return render(request, self.template_name)
 
-    # 如果文本长度超过500，找到最后一个句号、问号或感叹号
-    cutoff = 1500
-    while cutoff > 0:
-        if cleaned_text[cutoff] in ['.', '!', '?']:
-            break
-        cutoff -= 1
+        # 使用generate_image函数生成图像并获取保存路径
+        image_path = generate_image(prompt, request.user.username)
 
-    # 如果在前500个字符中没有找到句子结束的标点符号，返回前500个字符
-    if cutoff == 0:
-        return cleaned_text[:1500]
+        # 为简单起见，只是将图像的路径返回给用户。
+        context = {
+            'image_url': image_path  # 这里假设image_path是一个可以直接访问的URL
+        }
+        return render(request, self.template_name, context)
+        # render是Django的一个核心函数，用于将数据渲染到模板并返回一个HTTP响应
+        # 前端这样使用:
+        # < img
+        # src = "{{ image_url }}"
+        # alt = "Generated Image"
+        # style = "max-width: 100%;" >
 
-    # 否则，返回到最后一个句子结束的位置
-    return cleaned_text[:cutoff + 1]
+"""自动生成邮件"""
+@method_decorator(csrf_exempt, name='dispatch')
+class EmailGeneralView(LoginRequiredMixin, CreateView):
+    template_name = 'blog/email_reply.html'
+    # 网页只是显示表单
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {'is_reply': False})
 
+"""自动回复邮件"""
+@method_decorator(csrf_exempt, name='dispatch')
+class EmailReplyView(LoginRequiredMixin, CreateView):
+    template_name = 'blog/email_reply.html'
+
+    # 网页只是显示表单，用户还未提交数据
+    def get(self, request, *args, **kwargs):
+        # 从数据库获取当前user的email信息
+        user_id = request.session.get('_auth_user_id')
+        email_data = EmailAccount.objects.get(user_id=user_id)
+        user_email = email_data.email
+        user_password = email_data.password
+
+        # Check if user_email or user_password is empty
+        if not user_email or not user_password:
+            return render(request, self.template_name, {'is_reply': False})
+
+        return render(request, self.template_name, {'is_reply': True})
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': '无效的JSON数据'}, status=400)
+        # 获取表单提交信息
+        contact_email = data.get('email')
+        subject_keyword = data.get('keyword')
+        user_id = request.session.get('_auth_user_id')
+
+        # 从数据库获取当前user的email信息
+        email_data = EmailAccount.objects.get(user_id=user_id)
+        user_email = email_data.email
+        user_password = email_data.password
+
+        relate_email_infor = get_relate_emails(user_email, user_password, contact_email, subject_keyword)
+        print(relate_email_infor)
+       # 如果找到了匹配邮件
+        if relate_email_infor:
+            exists = True
+        else:
+            exists = False
+
+        if exists:
+            # 传输数据
+            subject = relate_email_infor[0]['Subject']
+            date = relate_email_infor[0]['Date']
+            body = relate_email_infor[0]['Body']
+            # 渲染模板 email_reply.html，可以传递需要在模板中显示的上下文数据
+            # rendered_html = render(request, self.template_name, context).content.decode('utf-8')
+            return JsonResponse({
+                'exists': True,
+                'email_infor': relate_email_infor,
+                'subject': subject,
+                'timestamp': date,
+                'body': body
+            })
+        else:
+            return JsonResponse({'exists': False})
+
+# 传输生成的Email
+@method_decorator(csrf_exempt, name='dispatch')
+class EmailGenerate(LoginRequiredMixin, CreateView):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': '无效的JSON数据'}, status=400)
+
+        user_id = request.session.get('_auth_user_id')
+        content = summary_infor(data, user_id= user_id)
+
+        # 在这里根据传入参数生成邮件主题和正文，可以调用相关算法或调用AI服务
+
+        return JsonResponse({
+            'content': content
+        })
 
 def check_user_logged_in(request):
     if request.user.is_authenticated:
         return JsonResponse({'status': 'logged_in'})
     else:
         return JsonResponse({'status': 'not_logged_in'})
-
-
-def a1_view(request):
-    return render(request, 'blog/assignment1.html')

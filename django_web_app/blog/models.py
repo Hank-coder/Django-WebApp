@@ -7,6 +7,14 @@ import os
 
 from django.utils.crypto import get_random_string
 
+"""
+Django 数据库迁移操作
+1. 在 models.py 文件中定义xx表
+2. 运行以下命令，将 UserProfile 表同步到 MySQL 数据库：
+
+python manage.py makemigrations
+python manage.py migrate blog
+"""
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -119,3 +127,7 @@ class DailyUsage(models.Model):
     usage_count = models.IntegerField(default=0)
     total_count = models.IntegerField(default=0)
 
+class EmailAccount(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    email = models.EmailField()  # 确保 email 唯一
+    password = models.CharField(max_length=255)

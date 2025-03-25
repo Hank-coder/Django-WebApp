@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能邮件助手</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --background: #f5f6fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--background);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 400px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        /* 主界面布局 */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        /* 输入区域 */
+        .input-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .required::after {
+            content: "*";
+            color: #e74c3c;
+            margin-left: 4px;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #bdc3c7; /* 灰色背景 */
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #95a5a6;
+        }
+
+        /* 结果区域 */
+        .result-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: var(--secondary-color);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-divider {
+            margin: 25px 0;
+            border-top: 1px solid #eee;
+        }
+
+        /* 回复草稿中textarea固定高度，并支持滚动 */
+        .reply-draft textarea {
+            height: 150px;
+            overflow: auto;
+        }
+
+        /* 原邮件内容的样式 */
+        .collapsible-section h3 {
+            margin: 0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+{#reply和general email的html不同#}
+<body data-is-reply="{{ is_reply|yesno:"true,false" }}">
+    <div class="container">
+        <!-- 第一步：搜索模态框 -->
+        <div id="searchModal" class="modal">
+            <div class="modal-content">
+                <a href="{% url 'blog-home' %}" class="btn btn-secondary">返回主页面</a>
+                <h2>邮件搜索</h2>
+                <form id="searchForm">
+                    <div class="form-group">
+                        <label for="searchEmail">收件人邮箱</label>
+                        <input type="email" id="searchEmail" name="searchEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="searchKeyword">主题关键词</label>
+                        <input type="text" id="searchKeyword" name="searchKeyword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">搜索</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 主界面 -->
+        <div class="main-layout" style="display: none;" id="mainLayout">
+            <!-- 左侧输入 -->
+            <div class="input-section">
+                 <!-- 返回主页面按钮 -->
+                <a href="{% url 'blog-home' %}" class="btn btn-secondary">返回主页面</a>
+                <!-- 返回搜索页面按钮 -->
+                {% if is_reply %}
+                <a href="{% url 'email-reply' %}" class="btn btn-secondary">重新搜索</a>
+                {% endif %}
+
+                <h2>邮件配置 <i class="fas fa-cog"></i></h2>
+                <form id="emailForm">
+                    <div class="form-group">
+                        <label class="required">语言</label>
+                        <select id="language" required>
+                            <option value="en">English</option>
+                            <option value="cn" selected>中文</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required">风格</label>
+                        <select id="style" required>
+                            <option value="formal">正式</option>
+                            <option value="concise">简洁</option>
+                            <option value="humorous">风趣</option>
+                        </select>
+                    </div>
+
+                    <div class="form-divider"></div>
+
+                    <div class="form-group">
+                        <label class="required">邮件目的</label>
+                        <textarea id="purpose" placeholder="请详细描述邮件的主要目的..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>发送者身份</label>
+                        <input type="text" id="senderRole" placeholder="例如：陈总:市场部经理">
+                    </div>
+
+                    <div class="form-group">
+                        <label>接受者身份</label>
+                        <input type="text" id="receiverRole" placeholder="例如：刘先生:合作客户">
+                    </div>
+
+                    <div class="form-divider"></div>
+
+                    <div class="form-group">
+                        <label>其他要求</label>
+                        <textarea id="additionalReq" placeholder="例如：需要包含会议时间、公司地址等信息"></textarea>
+                    </div>
+
+                </form>
+                <button id="generateEmailBtn" class="btn btn-primary" onclick="generateEmail()">生成邮件</button>
+            </div>
+
+            <!-- 右侧结果 -->
+            <div class="result-section">
+                <!-- 邮件预览区域，由 renderEmailPreview 动态生成 -->
+                <div id="emailPreview"></div>
+                <!-- 发送按钮放在最下面 -->
+                <button id="copyButton" class="btn btn-primary" onclick="copyEmail()"
+                        style="margin-top: 20px; display: none;">复制邮件</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner fa-spin"></i> 处理中...
+        </div>
+    </div>
+
+    <script>
+        let ori_email_data = ''
+        let email_id = ''
+        let emailSubject = '';
+        let emailTimestamp = '';
+        let emailBody = '';
+        let email_to = ''
+        let isReply = ''
+
+        // 初始化显示搜索模态框，并绑定搜索表单提交事件
+       window.onload = () => {
+            // 从 <body> 的 data attribute 获取 is_reply 标记
+            isReply = document.body.getAttribute('data-is-reply');
+
+            // 只有当标记为 'true' 时才运行下面的代码
+            if (isReply === 'true') {
+                document.getElementById('searchModal').style.display = 'flex';
+                document.getElementById('searchForm').addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    handleSearch();
+                });
+            }else{
+                document.getElementById('mainLayout').style.display = 'grid';
+            }
+        };
+        {#获取原邮件基础信息#}
+        async function handleSearch() {
+            const email = document.getElementById('searchEmail').value;
+            const keyword = document.getElementById('searchKeyword').value;
+            const searchBtn = document.querySelector("#searchForm button");
+            if (!email || !keyword) {
+                alert("请输入邮箱和主题关键词");
+                return;
+            }
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在搜索...`;
+
+            email_to = email;
+            const response = await fetch('/email/search/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, keyword })
+            });
+
+            const result = await response.json();
+
+            if (result.exists) {
+                email_id = result.email_id;
+                ori_email_data = result.email_infor;
+                emailSubject = result.subject;
+                emailTimestamp = result.timestamp;
+                emailBody = result.body;
+                {#const { subject, timestamp, body } = result;#}
+                const emailDetails = `邮件主题: ${emailSubject}\n邮件时间: ${emailTimestamp}`;
+                const userConfirmed = confirm(`找到匹配邮件:\n${emailDetails}\n\n是否继续？`);
+
+                if (userConfirmed) {
+                    document.getElementById('searchModal').style.display = 'none';
+                    document.getElementById('mainLayout').style.display = 'grid';
+                } else {
+                    document.getElementById('searchEmail').value = '';
+                    document.getElementById('searchKeyword').value = '';
+                }
+            searchBtn.disabled = false;
+            searchBtn.innerHTML = "搜索";
+            const previewDiv = document.getElementById('emailPreview');
+            previewDiv.innerHTML = `
+                <div class="collapsible-section">
+                    <h3 onclick="toggleCollapse()">
+                        原邮件内容
+                        <i id="collapseIcon" class="fas fa-chevron-down"></i>
+                    </h3>
+                    <div id="originalContent" class="preview-content" style="display: none;">
+                        ${emailBody}
+                    </div>
+                </div>
+                <div class="reply-draft" style="margin-top:20px;">
+                    <h3>回复草稿</h3>
+                    <div class="form-group">
+                        <label>收件人</label>
+                        <input type="email" id="finalEmail" value="${email_to}">
+                    </div>
+                    <div class="form-group">
+                        <label>主题</label>
+                        <input type="text" id="finalSubject" value="Re: ${emailSubject}">
+                    </div>
+                    <div class="form-group">
+                        <label>内容</label>
+                        <textarea id="finalContent" placeholder="请在此处填写回复内容..."></textarea>
+                    </div>
+                </div>
+            `;
+
+            } else {
+                alert("未找到匹配邮件");
+                 searchBtn.disabled = false;
+                 searchBtn.innerHTML = "搜索";
+                document.getElementById('searchEmail').value = '';
+                document.getElementById('searchKeyword').value = '';
+            }
+        }
+
+        async function generateEmail() {
+            // 禁用按钮，防止重复点击
+            document.getElementById('generateEmailBtn').disabled = true;
+            showLoading();
+
+            // 收集所有表单数据
+            const formData = {
+                email_data: ori_email_data,
+                subject: emailSubject,
+                body: emailBody,
+                receiver_email: email_to,
+                language: document.getElementById('language').value,
+                style: document.getElementById('style').value,
+                purpose: document.getElementById('purpose').value,
+                senderRole: document.getElementById('senderRole').value,
+                receiverRole: document.getElementById('receiverRole').value,
+                additionalReq: document.getElementById('additionalReq').value
+            };
+
+            if (!formData.purpose) {
+                alert("请填写邮件目的");
+                hideLoading();
+                // 重新激活按钮
+                document.getElementById('generateEmailBtn').disabled = false;
+                return;
+            }
+
+            try {
+                const response = await fetch('/email/generate/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                renderEmailPreview(result);
+                {#复制按钮激活#}
+                document.getElementById("copyButton").style.display = "block";
+            } catch (error) {
+                alert("生成失败：" + error.message);
+            } finally {
+                hideLoading();
+                // 生成完成后重新激活按钮
+                document.getElementById('generateEmailBtn').disabled = false;
+            }
+        }
+
+
+        // 渲染预览区域，包括原邮件内容与回复草稿（更新后将回复草稿的“内容”框设为可编辑）
+        function renderEmailPreview(data) {
+            const previewDiv = document.getElementById('emailPreview');
+            if (isReply === 'true') {
+                previewDiv.innerHTML = `
+                    <div class="collapsible-section">
+                        <h3 onclick="toggleCollapse()">
+                            原邮件内容
+                            <i id="collapseIcon" class="fas fa-chevron-down"></i>
+                        </h3>
+                        <div id="originalContent" class="preview-content" style="display: none;">
+                            ${emailBody}
+                        </div>
+                    </div>
+                    <div class="reply-draft" style="margin-top:20px;">
+                        <h3>回复草稿</h3>
+                        <div class="form-group">
+                            <label>收件人</label>
+                            <input type="email" id="finalEmail" value="${email_to}">
+                        </div>
+                        <div class="form-group">
+                            <label>主题</label>
+                            <input type="text" id="finalSubject" value="Re: ${emailSubject}">
+                        </div>
+                        <div class="form-group">
+                            <label>内容</label>
+                            <textarea id="finalContent" placeholder="请在此处填写回复内容...">${data.content}</textarea>
+                        </div>
+                    </div>
+                `;
+            }else{
+                 previewDiv.innerHTML = `
+
+                    <div class="reply-draft" style="margin-top:20px;">
+                        <h3>回复草稿</h3>
+
+                        <div class="form-group">
+                            <label>主题/内容</label>
+                             <textarea id="finalContent" style="min-height: 350px;" placeholder="">
+                                ${data.content}</textarea>
+                        </div>
+                    </div> `
+            }
+        }
+
+        // 切换原邮件内容展开与收起
+        function toggleCollapse() {
+            const originalContent = document.getElementById('originalContent');
+            const collapseIcon = document.getElementById('collapseIcon');
+            if (originalContent.style.display === 'none') {
+                originalContent.style.display = 'block';
+                collapseIcon.classList.remove('fa-chevron-down');
+                collapseIcon.classList.add('fa-chevron-up');
+            } else {
+                originalContent.style.display = 'none';
+                collapseIcon.classList.remove('fa-chevron-up');
+                collapseIcon.classList.add('fa-chevron-down');
+            }
+        }
+
+        async function copyEmail() {
+            try {
+                // 获取textarea的值
+                const content = document.getElementById('finalContent').value;
+                // 使用Clipboard API复制到剪贴板
+                await navigator.clipboard.writeText(content);
+
+                // 显示通知
+                showCopyNotification("已经复制到剪贴板！");
+            } catch (err) {
+                console.error('复制失败: ', err);
+            }
+        }
+
+        function showCopyNotification(message) {
+            // 检查浏览器是否支持通知
+            if (Notification.permission === "granted") {
+                new Notification(message);
+            } else if (Notification.permission !== "denied") {
+                // 请求通知权限
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification(message);
+                    }
+                });
+            }
+        }
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

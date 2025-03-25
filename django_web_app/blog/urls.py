@@ -1,11 +1,10 @@
 from django.urls import path
 from .views import (
     PostListView, ImageCreateView, GPTChatCreateView, GPTImageView, SaveChat, LoadChat,
-    DeleteChat, GPT4ImageView, DeleteGPT4Image, ppt2speech, pptSave, pptPlay, a1_view,
+    DeleteChat, GPT4ImageView, DeleteGPT4Image, ppt2speech, pptSave, pptPlay, EmailReplyView, EmailGenerate,
+    EmailGeneralView
 )
 from . import views
-
-
 # URL 对应处理
 urlpatterns = [
     path('', PostListView.as_view(), name='blog-home'),  # 首页
@@ -37,11 +36,16 @@ urlpatterns = [
     # path('post/<int:pk>/delete/', PostDeleteView.as_view(), name='post-delete'),
     # path('media/Files/<int:pk>', PostDeleteView.as_view(), name='post-delete'),
 
+    # 普通email界面
+    path('email/general/', EmailGeneralView.as_view(), name='email-general'),
+    # email reply界面
+    path('email/search/', EmailReplyView.as_view(), name='email-reply'),
+    # email生成
+    path('email/generate/', EmailGenerate.as_view(), name='email-generate'),
+
     path('search/', views.search, name='search'),
     path('about/', views.about, name='blog-about'),
 
     # 检查用户登陆状态
     path('check-user-status/', views.check_user_logged_in, name='check_user_status'),
-
-    path('a1/', a1_view, name='my_view_a1'),
 ]

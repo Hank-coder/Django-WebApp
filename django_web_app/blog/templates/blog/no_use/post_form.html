@@ -1,0 +1,94 @@
+{% extends "blog/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+    <div class="content-section pt-2 mt-3 shadow-lg"  >
+          <form action="" method="POST" enctype="multipart/form-data">  <!--enctype="multipart/form-data"，这是处理文件上传所必需的 刷新页面！-->
+              {% csrf_token %}
+              <fieldset class="form-group">
+                    <legend class="border-bottom mb-4">
+                        文本生成
+                    </legend>
+
+                  <!-- File Field with preview, USE JAVASCRIPT-->
+                <label for="fileInput">图片上传:</label>
+                <input id="fileInput" type="file" name="file" onchange="previewFile()" />
+                <img id="filePreview" src="#" alt="File preview" style="display: none; width: 100%;" />
+                <br><br>
+
+                <!-- Other fields rendered manually, REPLACE {{ form|crispy }}-->
+                <div> 语言 {{ form.language|as_crispy_field }} </div>
+                <div> 平台 {{ form.platform|as_crispy_field }}   </div>
+                <div> 图片类型 {{ form.photo_category|as_crispy_field }}</div>
+                <div> 生成要求 {{ form.special_request|as_crispy_field }} </div>
+              </fieldset>
+              <div class="form-group d-flex justify-content-start align-items-center">
+                <button class="btn btn-outline-primary" type="submit" onclick="validateForm() && showLoadingMessage()">
+                    <i class="fas fa-upload"></i> 生成内容
+                </button>
+                <!-- 加载旋转器和提示消息 -->
+                <div id="loadingMessage" class="ml-3 d-none">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <span class="ml-2">正在生成...</span>
+                </div>
+            </div>
+
+          </form>
+         
+      </div>
+
+{% endblock content %}
+
+{% block javascript %}
+<script>
+    function validateForm() {
+        const fileInput = document.getElementById('fileInput');
+        if (!fileInput.files.length) {
+            alert('Select at least one file! 请选择一个图片文件进行上传!');
+            return false;  // This will prevent form submission
+        }
+
+        // Check other fields
+        const language = document.querySelector('[name="language"]').value;
+        const platform = document.querySelector('[name="platform"]').value;
+        const photo_category = document.querySelector('[name="photo_category"]').value;
+        const special_request = document.querySelector('[name="special_request"]').value;
+
+        if (!language || !platform || !photo_category || !special_request) {
+            alert('Please fill in all the fields! 请填写所有字段！');
+            return false;  // This will prevent form submission
+        }
+
+        return true;
+    }
+
+    function previewFile() {
+        const preview = document.getElementById('filePreview');
+        const file = document.getElementById('fileInput').files[0];
+        const reader = new FileReader();
+
+        reader.onloadend = function() {
+            preview.src = reader.result;
+            preview.style.display = "block";  // Show the preview
+        }
+
+        if (file) {
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = "";
+        }
+    }
+    // 动态处理效果
+     function showLoadingMessage() {
+        // Toggle the loading message visibility
+        const loadingMessage = document.getElementById('loadingMessage');
+        loadingMessage.classList.remove('d-none');
+    }
+</script>
+{% endblock %}
+
+
+
+

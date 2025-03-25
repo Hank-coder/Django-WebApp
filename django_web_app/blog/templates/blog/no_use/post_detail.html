@@ -1,0 +1,55 @@
+{% extends "blog/base.html" %}
+{% block content %}
+<div class="jumbotron mt-3 shadow-lg">
+<article class="media content-section shadow ">
+    <div class="media-body">
+      <div class="">
+        <div class="d-flex justify-content-between">
+        <a class="mr-2 mt-0 mb-0  text-dark" href="{% url 'user-posts' object.author.username  %}">返回</a>
+        <a class="mr-2 mt-0 mb-0  text-dark"><h3>{{ post.platform.name }} :
+                {% for category in post.photo_category.all %}
+                    {{ category.name }}
+                    {% if not forloop.last %}, {% endif %}
+                {% endfor %}
+        </h3></a>
+        <small class="text-muted  text-align-right">
+         {{ object.author }} : {{ post.date_posted|date:"F d, Y" }}
+        </small>
+        </div>
+        {% if object.author != user %}
+          <div class="form-group mt-0 pt-0 d-flex justify-content-end">          
+            <a href="{{ object.file.url }}" download class="btn btn-primary flex-last" type="submit"><i class="fas fa-download"></i>下载</a>
+          </div>
+        {% endif %}
+        <hr>
+      </div>
+      <div>
+        {% if object.file %}
+          {% if object.extension|lower in ".jpg,.jpeg,.png" %}
+               <a href="{{ object.file.url }}"  download ><img src="{{ object.file.url }}" alt="" class="img-fluid"/></a>
+
+          {% elif object.extension == '.mp4' %}
+            <div class="embed-responsive embed-responsive-16by9">
+              <video id="video-1_html_api" class="vjs-tech" preload="auto" autoplay >
+                <source src="{{ object.file.url }}" type="video/mp4" class="embed-responsive">
+              </video>
+            </div>
+            <a href="{{ object.file.url }}"  download class="text-dark"><h5>{{ object.file }}</h5></a>
+          {% else %}
+            <a href="{{ object.file.url }}"  download class="text-dark"><h5>{{ object.file }}</h5></a>
+          {% endif %}
+        {% endif %}
+      </div>
+      {% if object.author == user %}
+        <form action="{% url 'post-update' object.id %}" method="post">
+            {% csrf_token %}
+            <textarea class="form-control" style="width: 100%;" rows="4" name="content">{{ post.generate_text }}</textarea>
+            <button class="btn btn-secondary btn-sm mt-1 mb-1" type="submit">保存内容</button>
+            <a class="btn btn-danger btn-sm mt-1 mb-1" href="{% url 'post-delete' object.id %}">删除内容</a>
+        </form>
+        {% else %}
+            <p class="article-content">{{ object.content }}</p>
+        {% endif %}
+    </div>
+  </article>
+{% endblock content %}

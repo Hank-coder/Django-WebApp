@@ -1,4 +1,6 @@
 import subprocess
+import time
+import traceback
 from datetime import datetime
 
 import requests
@@ -10,9 +12,10 @@ import os
 # UI 交互界面
 import configparser
 
+from openai import OpenAI
+
 # Global variable to hold the Tk instance
 tk_instance = None
-
 
 #
 # def open_file_dialog():
@@ -226,3 +229,23 @@ def fetch_search_results(query, internet_access=True, result_count=3):
         return extra
     else:
         return []
+
+""" GPT-4o请求 """
+def gpt_api(messages):
+    import openai
+    get_apikey(openai)
+    client = OpenAI()
+    itry = 0
+    while itry < 3:
+        try:
+            response = client.chat.completions.create(model="gpt-4o",
+                                                      messages=[{'role': 'user', 'content': messages}])
+
+            return response.choices[0].message.content.strip()
+        except:
+            print(traceback.format_exc())
+            time.sleep(1)
+            itry += 1
+            print('error occered in call gpt, tried {} times'.format(itry))
+            pass
+    return 'errored'

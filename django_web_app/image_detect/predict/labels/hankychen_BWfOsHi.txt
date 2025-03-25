@@ -1,5 +1,0 @@
-0.46 tabby
-0.24 tiger_cat
-0.20 Egyptian_cat
-0.05 snow_leopard
-0.01 lynx

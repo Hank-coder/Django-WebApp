@@ -31,7 +31,7 @@
             <li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
             <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
             <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
-             <li data-target="#carouselExampleIndicators" data-slide-to="3"></li>
+{#             <li data-target="#carouselExampleIndicators" data-slide-to="3"></li>#}
         </ol>
         <div class="carousel-inner">
             <div class="carousel-item active">
@@ -58,6 +58,7 @@
 {#                    点击进入朋友圈文案生成功能！#}
 {#                </div>#}
 {#            </div>#}
+
                <div class="carousel-item">
                 <a href="{% url 'image-generate' %}">
                     <img src="{% static 'home/img_3.png' %}" class="d-block w-100" alt="Image 4">
@@ -65,7 +66,17 @@
                 <div class="carousel-caption">
                     点击进入DALL·E AI图片生成！
                 </div>
-            </div>
+                </div>
+
+                <div class="carousel-item">
+                        <a href="{% url 'email-general' %} ">
+                            <img src="{% static 'home/img_4.png' %}" class="d-block w-100" alt="Image 5">
+                        </a>
+                        <div class="carousel-caption">
+                            点击进入自动生成邮件功能！
+                        </div>
+                 </div>
+
         </div>
         <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
             <span class="carousel-control-prev-icon" aria-hidden="true"></span>

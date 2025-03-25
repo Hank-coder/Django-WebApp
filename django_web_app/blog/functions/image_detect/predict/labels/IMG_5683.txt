@@ -1,5 +1,0 @@
-0.21 seashore
-0.20 aircraft_carrier
-0.06 promontory
-0.06 lakeside
-0.05 breakwater

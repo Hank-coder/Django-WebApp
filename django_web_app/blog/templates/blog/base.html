@@ -2,8 +2,6 @@
 <!doctype html>
 <html lang="en">
   <head>
-
-
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -51,7 +49,9 @@
                     {% if user.is_authenticated %}
 {#                        这里url对应 urls里面的name 转到对应的templates xx.html#}
                     <a href="{% url 'gpt-chat' %} " class="btn text-white m-2"><i class="fas fa-user-edit"></i> GPT基础版</a>
-{#                    <a href="{% url 'gpt-audio' %} " class="btn text-white m-2"><i class="fas fa-user-edit"></i> GPT语音版</a>#}
+                    <a href="{% url 'email-general' %} " class="btn text-white m-2"><i class="fas fa-user-edit"></i>邮件生成</a>
+                        <a href="{% url 'email-reply' %} " class="btn text-white m-2"><i class="fas fa-user-edit"></i>邮件回复</a>
+{#                  <a href="{% url 'gpt-audio' %} " class="btn text-white m-2"><i class="fas fa-user-edit"></i> GPT语音版</a>#}
                     <a href="{% url 'image-generate' %} " class="btn text-white m-2"><i class="fas fa-user-edit"></i> 图片生成</a>
 {#                    <a href="{% url 'post-create' %} " class="btn text-white m-2"><i class="fas fa-user-edit"></i> 文案生成</a>#}
 {#                    <a href="{% url 'user-posts' user %}" class="btn text-white m-2"><i class="fas fa-user-shield"></i> 文案记录</a>#}
